@@ -1,6 +1,7 @@
 package finalEx.game;
 
 import javax.swing.*;
+import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -9,8 +10,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 
 public class MyClient extends JFrame {
     private Container c;
@@ -19,9 +22,24 @@ public class MyClient extends JFrame {
     int x, y;   // mouse pointer position
     int px, py; // preliminary position
 
+    ArrayList<String> nameList = new ArrayList<>();
+
+    JPanel mainPanel = new JPanel();
+    JPanel namePanel = new JPanel();
+    JPanel answerPanel = new JPanel();
+    JPanel canvasPanel  = new JPanel();
+
+    JTextArea answerList = new JTextArea();
+    JTextArea userList = new JTextArea(3, 20);
+
+
+    /*answerList.setEditable(false);
+    userList.setEditable(false);*/
+
     public MyClient() {
         //名前の入力ダイアログを開く
         String myName = JOptionPane.showInputDialog(null,"名前を入力してください","名前の入力",JOptionPane.QUESTION_MESSAGE);
+
         if(myName.equals("")){
             myName = "No name";//名前がないときは，"No name"とする
         }
@@ -32,16 +50,41 @@ public class MyClient extends JFrame {
         setSize(500,500);//ウィンドウのサイズを設定する
         c = getContentPane();//フレームのペインを取得する
         mc = new MyCanvas(this); // mc のオブジェクト（実体）を作成
+
+        LineBorder border = new LineBorder(Color.BLACK, 1, true);//枠線の設定
+        namePanel.setLayout(new BorderLayout());
+        namePanel.add(new JLabel("あなたの名前 : " + myName) , BorderLayout.WEST) ;
+
+        answerPanel.setLayout(new BorderLayout());
+        answerPanel.setBorder(border);
+        answerPanel.add(new JLabel("ログ" ) , BorderLayout.NORTH) ;
+        answerPanel.add(answerList , BorderLayout.CENTER);
+
+        canvasPanel.setLayout(new BorderLayout());
+        canvasPanel.setBorder(border);
+        canvasPanel.add(mc , BorderLayout.CENTER);
+
+        mainPanel.setLayout(new BorderLayout());
+        mainPanel.add(canvasPanel , BorderLayout.CENTER);
+        mainPanel.add(namePanel , BorderLayout.NORTH);
+        mainPanel.add(answerPanel , BorderLayout.EAST);
+        mainPanel.add(userList , BorderLayout.WEST);
+        this.add(mainPanel , BorderLayout.CENTER);
+
+        /*
         this.setLayout(new BorderLayout(10, 10)); // レイアウト方法の指定
         this.add(mc,  BorderLayout.CENTER);       // 左側に mc （キャンバス）を配置
         this.setVisible(true); //可視化
-
+*/
         //サーバに接続する
         Socket socket = null;
         try {
             //"localhost"は，自分内部への接続．localhostを接続先のIP Address（"133.42.155.201"形式）に設定すると他のPCのサーバと通信できる
             //10000はポート番号．IP Addressで接続するPCを決めて，ポート番号でそのPC上動作するプログラムを特定する
-            socket = new Socket("localhost", 10000);
+            //socket = new Socket("192.168.10.133", 10000);
+            InetSocketAddress endpoint= new InetSocketAddress("133.14.221.165",  10000);
+            socket = new Socket();
+            socket.connect(endpoint, 1000);
         } catch (UnknownHostException e) {
             System.err.println("ホストの IP アドレスが判定できません: " + e);
         } catch (IOException e) {
@@ -70,21 +113,43 @@ public class MyClient extends JFrame {
                 InputStreamReader sisr = new InputStreamReader(socket.getInputStream());
                 BufferedReader br = new BufferedReader(sisr);
                 out = new PrintWriter(socket.getOutputStream(), true);
+
                 out.println(myName);//接続の最初に名前を送る   L68
+
                 while(true) {
+
                     String inputLine = br.readLine();//データを一行分だけ読み込んでみる
                     mc.paint2(px, py, x, y);
-                    mc.repaint(); // これ
+                    mc.repaint();
+
                     if (inputLine != null) {//読み込んだときにデータが読み込まれたかどうかをチェックする
                         System.out.println(inputLine);//デバッグ（動作確認用）にコンソールに出力する
-                        String[] inputTokens = inputLine.split(" ");	//入力データを解析するために、スペースで切り分ける
-                        String cmd = inputTokens[0];//コマンドの取り出し．１つ目の要素を取り出す
-                        int px = Integer.parseInt(inputTokens[0]);//数値に変換する   L75
-                        int py = Integer.parseInt(inputTokens[1]);//数値に変換する
-                        int x = Integer.parseInt(inputTokens[2]);//数値に変換する
-                        int y = Integer.parseInt(inputTokens[3]);//数値に変換する
-                        mc.paint2(px, py, x, y);
-                        mc.repaint();
+
+                        int cmdIndex = inputLine.indexOf(":");
+                        int endIndex = inputLine.length();
+                        String command = inputLine.substring(0,cmdIndex);//入力内容の分類
+                        String recvStr = inputLine.substring(cmdIndex + 1 , endIndex);
+
+                        //pointコマンドなら描画
+                        if(command.equals("point")){
+                            System.out.println(command);
+                            String[] inputTokens = recvStr.split(" ");    //入力データを解析するために、スペースで切り分ける
+                            String cmd = inputTokens[0];//コマンドの取り出し．１つ目の要素を取り出す
+                            int px = Integer.parseInt(inputTokens[0]);//数値に変換する   L75
+                            int py = Integer.parseInt(inputTokens[1]);//数値に変換する
+                            int x = Integer.parseInt(inputTokens[2]);//数値に変換する
+                            int y = Integer.parseInt(inputTokens[3]);//数値に変換する
+                            mc.paint2(px, py, x, y);
+                            mc.repaint();
+                        }
+                        //userコマンドならnameListに追加
+                        else if(command.equals("user")){
+                          String[] user = recvStr.split(",");
+                          userList.setText("");
+                          for(String name : user){
+                              userList.append(recvStr);
+                          }
+                        }
 
                     }else{
                         break;
@@ -143,6 +208,7 @@ class MyCanvas extends Canvas implements MouseListener, MouseMotionListener {
             gc = img.getGraphics(); // 作成
 
         paint2(px,py,x,y);
+
         g.drawImage(img, 0, 0, this); // 仮の画用紙の内容を MyCanvas に描画
     }
 
@@ -184,7 +250,7 @@ class MyCanvas extends Canvas implements MouseListener, MouseMotionListener {
         System.out.println(px+", "+py+", "+x+", "+y);
 
         //送信情報を作成する（受信時には，この送った順番にデータを取り出す．スペースがデータの区切りとなる）
-        String msg = px+" "+py+" "+x+" "+y;
+        String msg = "point:"  + px+" "+py+" "+x+" "+y;
 
         //サーバに情報を送る
         client.out.println(msg);//送信データをバッファに書き出す
