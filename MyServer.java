@@ -1,9 +1,12 @@
+package finalEx.game;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.io.InputStreamReader;
-import java.io.BufferedReader;
-import java.io.PrintWriter;
-import java.io.IOException;
+import java.util.ArrayList;
 
 //スレッド部（各クライアントに応じて）
 class ClientProcThread extends Thread {
@@ -13,6 +16,9 @@ class ClientProcThread extends Thread {
     private BufferedReader myIn;
     private PrintWriter myOut;
     private String myName;//接続者の名前
+
+    MyServer server = new MyServer();
+
 
     public ClientProcThread(int n, Socket i, InputStreamReader isr, BufferedReader in, PrintWriter out) {
         number = n;
@@ -24,24 +30,46 @@ class ClientProcThread extends Thread {
 
     public void run() {
         try {
-            myOut.println("Hello, client No." + number + "! Enter 'Bye' to exit.");//初回だけ呼ばれる
+           // myOut.println("Hello, client No." + number + "! Enter 'Bye' to exit.");//初回だけ呼ばれる
 
             myName = myIn.readLine();//初めて接続したときの一行目は名前
 
+            MyServer.addUser((myName));
+
+
+            //誰かが接続したら全員に名前のリストを送る
+           // MyServer.SendAll(MyServer.createUserList(MyServer.getUserName() ), myName);
+
+
             while (true) {//無限ループで，ソケットへの入力を監視する
+
                 String str = myIn.readLine();
-                System.out.println("Received from client No."+number+"("+myName+"), Messages: "+str);
+
+                int cmdIndex = str.indexOf(":");
+                int endIndex = str.length();
+                String cmd = str.substring(0,cmdIndex);//入力内容の分類
+                String sendStr = str.substring(cmdIndex + 1 , endIndex);
+
+                //描画している時
+                if(cmd.equals("point")){
+                   System.out.println( +number+"("+myName+"), Point: "+sendStr);
+                   MyServer.SendAll("point:"+sendStr , myName);//サーバに来たメッセージは接続しているクライアント全員に配る
+                }
+
+                System.out.println("Received from client No."+number+"("+myName+"), Messages: "+str + "(" + cmd + ")");
+
                 if (str != null) {//このソケット（バッファ）に入力があるかをチェック
-                    if (str.toUpperCase().equals("BYE")) {
+                  if (str.toUpperCase().equals("BYE")) {
                         myOut.println("Good bye!");
                         break;
                     }
-                    MyServer.SendAll(str, myName);//サーバに来たメッセージは接続しているクライアント全員に配る
+                  //  MyServer.SendAll(sendStr , myName);//サーバに来たメッセージは接続しているクライアント全員に配る
                 }
             }
         } catch (Exception e) {
             //ここにプログラムが到達するときは，接続が切れたとき
             System.out.println("Disconnect from client No."+number+"("+myName+")");
+            MyServer.removeUser(myName);
             MyServer.SetFlag(number, false);//接続が切れたのでフラグを下げる
         }
     }
@@ -49,7 +77,7 @@ class ClientProcThread extends Thread {
 
 class MyServer{
 
-    private static int maxConnection=100;//最大接続数
+    private static int maxConnection=10;//最大接続数
     private static Socket[] incoming;//受付用のソケット
     private static boolean[] flag;//接続中かどうかのフラグ
     private static InputStreamReader[] isr;//入力ストリーム用の配列
@@ -57,6 +85,8 @@ class MyServer{
     private static PrintWriter[] out;//出力ストリーム用の配列
     private static ClientProcThread[] myClientProcThread;//スレッド用の配列
     private static int member;//接続しているメンバーの数
+
+    private static ArrayList<String> userName = new ArrayList<>();
 
     //全員にメッセージを送る
     public static void SendAll(String str, String myName){
@@ -75,6 +105,26 @@ class MyServer{
         flag[n] = value;
     }
 
+    //ユーザーを管理するリストにユーザーを追加
+    public static void addUser(String user){
+        userName.add(user);
+    }
+    //ユーザを削除
+    public static void removeUser(String user){
+        userName.remove(user);
+    }
+
+    public static ArrayList<String> getUserName(){return userName;}
+
+
+    public static String createUserList(ArrayList<String> user){
+        String userList = "user:";
+        for(String name : user){
+            userList += name + ",";
+        }
+        return userList;
+    }
+
     //mainプログラム
     public static void main(String[] args) {
         //必要な配列を確保する
@@ -83,14 +133,20 @@ class MyServer{
         isr = new InputStreamReader[maxConnection];
         in = new BufferedReader[maxConnection];
         out = new PrintWriter[maxConnection];
+
+
         myClientProcThread = new ClientProcThread[maxConnection];
 
         int n = 1;
         member = 0;//誰も接続していないのでメンバー数は０
 
         try {
+            InetAddress addr = InetAddress.getLocalHost();
             System.out.println("The server has launched!");
+            System.out.println("IP Address     : " + addr.getHostAddress());
             ServerSocket server = new ServerSocket(10000);//10000番ポートを利用する
+
+
             while (true) {
                 incoming[n] = server.accept();
                 flag[n] = true;
@@ -105,6 +161,7 @@ class MyServer{
                 member = n;//メンバーの数を更新する
                 n++;
             }
+
         } catch (Exception e) {
             System.err.println("ソケット作成時にエラーが発生しました: " + e);
         }
