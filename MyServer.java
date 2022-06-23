@@ -30,7 +30,6 @@ class ClientProcThread extends Thread {
 
     public void run() {
         try {
-           // myOut.println("Hello, client No." + number + "! Enter 'Bye' to exit.");//初回だけ呼ばれる
 
             myName = myIn.readLine();//初めて接続したときの一行目は名前
 
@@ -38,7 +37,7 @@ class ClientProcThread extends Thread {
 
 
             //誰かが接続したら全員に名前のリストを送る
-           // MyServer.SendAll(MyServer.createUserList(MyServer.getUserName() ), myName);
+            MyServer.SendAll(MyServer.createUserList(MyServer.getUserName() ), myName);
 
 
             while (true) {//無限ループで，ソケットへの入力を監視する
@@ -62,15 +61,16 @@ class ClientProcThread extends Thread {
                   if (str.toUpperCase().equals("BYE")) {
                         myOut.println("Good bye!");
                         break;
-                    }
-                  //  MyServer.SendAll(sendStr , myName);//サーバに来たメッセージは接続しているクライアント全員に配る
-                }
+
+                }}
             }
         } catch (Exception e) {
             //ここにプログラムが到達するときは，接続が切れたとき
             System.out.println("Disconnect from client No."+number+"("+myName+")");
             MyServer.removeUser(myName);
             MyServer.SetFlag(number, false);//接続が切れたのでフラグを下げる
+            //誰かが切れたらユーザリストを更新するために全員に新しいリストを送信
+            MyServer.SendAll(MyServer.createUserList(MyServer.getUserName() ), myName);
         }
     }
 }

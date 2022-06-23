@@ -27,14 +27,19 @@ public class MyClient extends JFrame {
     JPanel mainPanel = new JPanel();
     JPanel namePanel = new JPanel();
     JPanel answerPanel = new JPanel();
-    JPanel canvasPanel  = new JPanel();
 
-    JTextArea answerList = new JTextArea();
-    JTextArea userList = new JTextArea(3, 20);
+    JPanel rightPanel = new JPanel();
+    JPanel centerPanel = new JPanel();
+    JPanel leftPanel = new JPanel();
 
+    JTextArea logList = new JTextArea();
 
-    /*answerList.setEditable(false);
-    userList.setEditable(false);*/
+    JTextArea userList = new JTextArea();
+
+    JTextField answerText = new JTextField();
+
+    JButton submitButton = new JButton("送信");
+
 
     public MyClient() {
         //名前の入力ダイアログを開く
@@ -47,28 +52,45 @@ public class MyClient extends JFrame {
         //ウィンドウを作成する
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);//ウィンドウを閉じるときに，正しく閉じるように設定する
         setTitle("DrawingApli");//ウィンドウのタイトルを設定する
-        setSize(500,500);//ウィンドウのサイズを設定する
+        setSize(800,800);//ウィンドウのサイズを設定する
         c = getContentPane();//フレームのペインを取得する
         mc = new MyCanvas(this); // mc のオブジェクト（実体）を作成
-
         LineBorder border = new LineBorder(Color.BLACK, 1, true);//枠線の設定
+
+
+
         namePanel.setLayout(new BorderLayout());
         namePanel.add(new JLabel("あなたの名前 : " + myName) , BorderLayout.WEST) ;
 
         answerPanel.setLayout(new BorderLayout());
-        answerPanel.setBorder(border);
-        answerPanel.add(new JLabel("ログ" ) , BorderLayout.NORTH) ;
-        answerPanel.add(answerList , BorderLayout.CENTER);
+        answerPanel.setPreferredSize(new Dimension(150, 25));//パネルサイズを広げる
+        answerPanel.add(answerText , BorderLayout.CENTER);
+        answerPanel.add(submitButton , BorderLayout.EAST);
 
-        canvasPanel.setLayout(new BorderLayout());
-        canvasPanel.setBorder(border);
-        canvasPanel.add(mc , BorderLayout.CENTER);
+        rightPanel.setLayout(new BorderLayout());
+        rightPanel.setPreferredSize(new Dimension(150, 500));//パネルサイズを広げる
+        rightPanel.setBorder(border);
+        rightPanel.add(new JLabel("ログ" ) , BorderLayout.NORTH) ;
+        rightPanel.add(logList , BorderLayout.CENTER);
+        rightPanel.add(answerPanel , BorderLayout.SOUTH);
+
+        centerPanel.setLayout(new BorderLayout());
+        centerPanel.setBorder(border);
+        centerPanel.add(mc , BorderLayout.CENTER);
+
+        leftPanel.setLayout(new BorderLayout());
+        leftPanel.setPreferredSize(new Dimension(100, 500));//パネルサイズを広げる
+        leftPanel.setBorder(border);
+        leftPanel.add(new JLabel("参加中のユーザ" ) , BorderLayout.NORTH) ;
+        leftPanel.add(userList , BorderLayout.CENTER);
+
+
 
         mainPanel.setLayout(new BorderLayout());
-        mainPanel.add(canvasPanel , BorderLayout.CENTER);
+        mainPanel.add(centerPanel , BorderLayout.CENTER);
         mainPanel.add(namePanel , BorderLayout.NORTH);
-        mainPanel.add(answerPanel , BorderLayout.EAST);
-        mainPanel.add(userList , BorderLayout.WEST);
+        mainPanel.add(rightPanel , BorderLayout.EAST);
+        mainPanel.add(leftPanel , BorderLayout.WEST);
         this.add(mainPanel , BorderLayout.CENTER);
 
         /*
@@ -82,7 +104,7 @@ public class MyClient extends JFrame {
             //"localhost"は，自分内部への接続．localhostを接続先のIP Address（"133.42.155.201"形式）に設定すると他のPCのサーバと通信できる
             //10000はポート番号．IP Addressで接続するPCを決めて，ポート番号でそのPC上動作するプログラムを特定する
             //socket = new Socket("192.168.10.133", 10000);
-            InetSocketAddress endpoint= new InetSocketAddress("133.14.221.165",  10000);
+            InetSocketAddress endpoint= new InetSocketAddress("192.168.10.107",  10000);
             socket = new Socket();
             socket.connect(endpoint, 1000);
         } catch (UnknownHostException e) {
@@ -119,16 +141,28 @@ public class MyClient extends JFrame {
                 while(true) {
 
                     String inputLine = br.readLine();//データを一行分だけ読み込んでみる
-                    mc.paint2(px, py, x, y);
-                    mc.repaint();
+
+                    int cmdIndex = inputLine.indexOf(":");
+                    int endIndex = inputLine.length();
+                    String command = inputLine.substring(0,cmdIndex);//入力内容の分類
+                    String recvStr = inputLine.substring(cmdIndex + 1 , endIndex);
+
+                    //userコマンドならnameListに追加
+                    if(command.equals("user")){
+                        String[] user = recvStr.split(",");
+                        System.out.println(user);
+                        userList.setText("");
+                        for(String name : user){
+                            userList.append(name + "\n");
+                        }
+                    }
+                    else{
+                        mc.paint2(px, py, x, y);
+                        mc.repaint();
+                    }
 
                     if (inputLine != null) {//読み込んだときにデータが読み込まれたかどうかをチェックする
                         System.out.println(inputLine);//デバッグ（動作確認用）にコンソールに出力する
-
-                        int cmdIndex = inputLine.indexOf(":");
-                        int endIndex = inputLine.length();
-                        String command = inputLine.substring(0,cmdIndex);//入力内容の分類
-                        String recvStr = inputLine.substring(cmdIndex + 1 , endIndex);
 
                         //pointコマンドなら描画
                         if(command.equals("point")){
@@ -142,13 +176,15 @@ public class MyClient extends JFrame {
                             mc.paint2(px, py, x, y);
                             mc.repaint();
                         }
+
                         //userコマンドならnameListに追加
-                        else if(command.equals("user")){
-                          String[] user = recvStr.split(",");
-                          userList.setText("");
-                          for(String name : user){
-                              userList.append(recvStr);
-                          }
+                        if(command.equals("user")){
+                            String[] user = recvStr.split(",");
+                            System.out.println(user);
+                            userList.setText("");
+                            for(String name : user){
+                                userList.append(name + "\n");
+                            }
                         }
 
                     }else{
