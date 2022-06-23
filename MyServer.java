@@ -54,6 +54,10 @@ class ClientProcThread extends Thread {
                    System.out.println( +number+"("+myName+"), Point: "+sendStr);
                    MyServer.SendAll("point:"+sendStr , myName);//サーバに来たメッセージは接続しているクライアント全員に配る
                 }
+                else if(cmd.equals("msg")){
+                    MyServer.addMsg((sendStr));
+                    MyServer.SendAll(MyServer.createMsgList(MyServer.getMessageList()) , myName);//サーバに来たメッセージは接続しているクライアント全員に配る
+                }
 
                 System.out.println("Received from client No."+number+"("+myName+"), Messages: "+str + "(" + cmd + ")");
 
@@ -86,7 +90,10 @@ class MyServer{
     private static ClientProcThread[] myClientProcThread;//スレッド用の配列
     private static int member;//接続しているメンバーの数
 
+    //参加中のユーザを管理するリスト
     private static ArrayList<String> userName = new ArrayList<>();
+    //送信されたメッセージを管理するリスト
+    private static ArrayList<String> msgList = new ArrayList<>();
 
     //全員にメッセージを送る
     public static void SendAll(String str, String myName){
@@ -116,6 +123,14 @@ class MyServer{
 
     public static ArrayList<String> getUserName(){return userName;}
 
+    //メッセージを管理するリストにユーザーを追加
+    public static void addMsg(String msg){
+        msgList.add(msg);
+    }
+
+
+    public static ArrayList<String> getMessageList(){return msgList;}
+
 
     public static String createUserList(ArrayList<String> user){
         String userList = "user:";
@@ -123,6 +138,14 @@ class MyServer{
             userList += name + ",";
         }
         return userList;
+    }
+
+    public static String createMsgList(ArrayList<String> msg){
+        String msgList = "msg:";
+        for(String m : msg){
+            msgList += m + ",";
+        }
+        return msgList;
     }
 
     //mainプログラム

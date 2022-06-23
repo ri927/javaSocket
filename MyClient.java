@@ -1,8 +1,11 @@
 package finalEx.game;
 
+
 import javax.swing.*;
 import javax.swing.border.LineBorder;
+import javax.swing.text.DefaultCaret;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -14,10 +17,12 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import javax.swing.text.*;
+import java.awt.*;
 
 public class MyClient extends JFrame {
     private Container c;
-    PrintWriter out;//出力用のライター
+    static PrintWriter out;//出力用のライター
     MyCanvas mc;
     int x, y;   // mouse pointer position
     int px, py; // preliminary position
@@ -33,12 +38,14 @@ public class MyClient extends JFrame {
     JPanel leftPanel = new JPanel();
 
     JTextArea logList = new JTextArea();
+    JScrollPane logScr = new JScrollPane( logList ); // スクロールバーを付ける場合
 
     JTextArea userList = new JTextArea();
 
     JTextField answerText = new JTextField();
 
-    JButton submitButton = new JButton("送信");
+
+    JButton submitButton = new JButton(new submitAction());
 
 
     public MyClient() {
@@ -71,7 +78,7 @@ public class MyClient extends JFrame {
         rightPanel.setPreferredSize(new Dimension(150, 500));//パネルサイズを広げる
         rightPanel.setBorder(border);
         rightPanel.add(new JLabel("ログ" ) , BorderLayout.NORTH) ;
-        rightPanel.add(logList , BorderLayout.CENTER);
+        rightPanel.add(logScr , BorderLayout.CENTER);
         rightPanel.add(answerPanel , BorderLayout.SOUTH);
 
         centerPanel.setLayout(new BorderLayout());
@@ -103,7 +110,6 @@ public class MyClient extends JFrame {
         try {
             //"localhost"は，自分内部への接続．localhostを接続先のIP Address（"133.42.155.201"形式）に設定すると他のPCのサーバと通信できる
             //10000はポート番号．IP Addressで接続するPCを決めて，ポート番号でそのPC上動作するプログラムを特定する
-            //socket = new Socket("192.168.10.133", 10000);
             InetSocketAddress endpoint= new InetSocketAddress("192.168.10.107",  10000);
             socket = new Socket();
             socket.connect(endpoint, 1000);
@@ -121,7 +127,7 @@ public class MyClient extends JFrame {
     public class MesgRecvThread extends Thread {
 
         Socket socket;
-        String myName;
+        static String myName;
 
         public MesgRecvThread(Socket s, String n){
             socket = s;
@@ -168,8 +174,8 @@ public class MyClient extends JFrame {
                         if(command.equals("point")){
                             System.out.println(command);
                             String[] inputTokens = recvStr.split(" ");    //入力データを解析するために、スペースで切り分ける
-                            String cmd = inputTokens[0];//コマンドの取り出し．１つ目の要素を取り出す
-                            int px = Integer.parseInt(inputTokens[0]);//数値に変換する   L75
+
+                            int px = Integer.parseInt(inputTokens[0]);//数値に変換する
                             int py = Integer.parseInt(inputTokens[1]);//数値に変換する
                             int x = Integer.parseInt(inputTokens[2]);//数値に変換する
                             int y = Integer.parseInt(inputTokens[3]);//数値に変換する
@@ -177,10 +183,19 @@ public class MyClient extends JFrame {
                             mc.repaint();
                         }
 
+                        //msgコマンドならログリストにメッセージを表示
+                        else if(command.equals(("msg"))){
+                            String[] message = recvStr.split(",");//入力データを解析するために、, で切り分ける
+                            logList.setText("");
+                            for(String m : message){
+                                String[] splitMessage = m.split("\\.");
+                                logList.append( splitMessage[0] + ":" + splitMessage[1] + "\n");
+                            }
+                        }
+
                         //userコマンドならnameListに追加
-                        if(command.equals("user")){
+                        else if(command.equals("user")){
                             String[] user = recvStr.split(",");
-                            System.out.println(user);
                             userList.setText("");
                             for(String name : user){
                                 userList.append(name + "\n");
@@ -204,6 +219,26 @@ public class MyClient extends JFrame {
     public static void main(String[] args) {
         MyClient net = new MyClient();
         net.setVisible(true);
+    }
+
+    //送信ボタンを押したとき
+    class submitAction extends AbstractAction{
+        submitAction() {
+            putValue( Action.NAME, "送信" );
+            putValue( Action.SHORT_DESCRIPTION, "送信" );
+        }
+        public void actionPerformed(ActionEvent e) {
+            String inputMessage = answerText.getText();
+
+            if(!inputMessage.equals((""))){
+                //サーバに情報を送る
+                //コマンド msg 名前とメッセージを , 区切りで挿入し送信
+                MyClient.out.println("msg:"  + MesgRecvThread.myName +  "."+ inputMessage);//送信データをバッファに書き出す
+                MyClient.out.flush();//送信データをフラッシュ（ネットワーク上にはき出す）する
+            }
+
+
+        }
     }
 }
 
