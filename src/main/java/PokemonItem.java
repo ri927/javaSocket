@@ -1,5 +1,3 @@
-package finalEx.game;
-
 public class PokemonItem {
     String name;
 

@@ -1,5 +1,3 @@
-package finalEx.game;
-
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
