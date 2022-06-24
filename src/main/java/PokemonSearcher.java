@@ -43,9 +43,11 @@ public class PokemonSearcher {
     public ArrayList<PokemonItem> getItemList(){
         ArrayList<PokemonItem> itemList = new ArrayList<PokemonItem>();
         String name;
+        int no;
         for(int i = 0; i < response.data.size(); i++) {
             name = response.data.get(i).name;
-            itemList.add(new PokemonItem(name));
+            no = Integer.parseInt(response.data.get(i).no);
+            itemList.add(new PokemonItem(name, no));
         }
         return itemList;
     }
