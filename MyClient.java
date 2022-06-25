@@ -1,9 +1,7 @@
 package finalEx.game;
 
-
 import javax.swing.*;
 import javax.swing.border.LineBorder;
-import javax.swing.text.DefaultCaret;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
@@ -17,15 +15,18 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import javax.swing.text.*;
-import java.awt.*;
+
 
 public class MyClient extends JFrame {
-    private Container c;
+    static Container c;
     static PrintWriter out;//出力用のライター
     MyCanvas mc;
     int x, y;   // mouse pointer position
     int px, py; // preliminary position
+
+    int width = 700;
+    int height = 700;
+
 
     ArrayList<String> nameList = new ArrayList<>();
 
@@ -37,15 +38,24 @@ public class MyClient extends JFrame {
     JPanel centerPanel = new JPanel();
     JPanel leftPanel = new JPanel();
 
+
+    JPanel centerSouthPanel = new JPanel();
+    JPanel centerNorthPanel = new JPanel();
+
     JTextArea logList = new JTextArea();
     JScrollPane logScr = new JScrollPane( logList ); // スクロールバーを付ける場合
 
     JTextArea userList = new JTextArea();
 
     JTextField answerText = new JTextField();
-
+    JTextField questionField = new JTextField();
 
     JButton submitButton = new JButton(new submitAction());
+    JButton resetButton = new JButton(new resetAction());
+    JButton startButton = new JButton( new startAction());
+    JButton endButton = new JButton( new endAction());
+
+
 
 
     public MyClient() {
@@ -59,12 +69,10 @@ public class MyClient extends JFrame {
         //ウィンドウを作成する
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);//ウィンドウを閉じるときに，正しく閉じるように設定する
         setTitle("DrawingApli");//ウィンドウのタイトルを設定する
-        setSize(800,800);//ウィンドウのサイズを設定する
+        setSize(width,height);//ウィンドウのサイズを設定する
         c = getContentPane();//フレームのペインを取得する
         mc = new MyCanvas(this); // mc のオブジェクト（実体）を作成
         LineBorder border = new LineBorder(Color.BLACK, 1, true);//枠線の設定
-
-
 
         namePanel.setLayout(new BorderLayout());
         namePanel.add(new JLabel("あなたの名前 : " + myName) , BorderLayout.WEST) ;
@@ -74,8 +82,18 @@ public class MyClient extends JFrame {
         answerPanel.add(answerText , BorderLayout.CENTER);
         answerPanel.add(submitButton , BorderLayout.EAST);
 
+        centerSouthPanel.setLayout((new GridLayout(1,2)));
+        centerSouthPanel.setPreferredSize(new Dimension(400, 25));//パネルサイズを広げる
+        centerSouthPanel.add(endButton );
+        centerSouthPanel.add(startButton );
+
+        centerNorthPanel.setLayout(new GridLayout(2,1));
+        centerNorthPanel.setPreferredSize(new Dimension(400, 50));//パネルサイズを広げる
+        centerNorthPanel.add(questionField);
+        centerNorthPanel.add(resetButton);
+
         rightPanel.setLayout(new BorderLayout());
-        rightPanel.setPreferredSize(new Dimension(150, 500));//パネルサイズを広げる
+        rightPanel.setPreferredSize(new Dimension(200, 500));//パネルサイズを広げる
         rightPanel.setBorder(border);
         rightPanel.add(new JLabel("ログ" ) , BorderLayout.NORTH) ;
         rightPanel.add(logScr , BorderLayout.CENTER);
@@ -84,14 +102,14 @@ public class MyClient extends JFrame {
         centerPanel.setLayout(new BorderLayout());
         centerPanel.setBorder(border);
         centerPanel.add(mc , BorderLayout.CENTER);
+        centerPanel.add(centerSouthPanel , BorderLayout.SOUTH);
+        centerPanel.add(centerNorthPanel, BorderLayout.NORTH);
 
         leftPanel.setLayout(new BorderLayout());
         leftPanel.setPreferredSize(new Dimension(100, 500));//パネルサイズを広げる
         leftPanel.setBorder(border);
         leftPanel.add(new JLabel("参加中のユーザ" ) , BorderLayout.NORTH) ;
         leftPanel.add(userList , BorderLayout.CENTER);
-
-
 
         mainPanel.setLayout(new BorderLayout());
         mainPanel.add(centerPanel , BorderLayout.CENTER);
@@ -100,19 +118,15 @@ public class MyClient extends JFrame {
         mainPanel.add(leftPanel , BorderLayout.WEST);
         this.add(mainPanel , BorderLayout.CENTER);
 
-        /*
-        this.setLayout(new BorderLayout(10, 10)); // レイアウト方法の指定
-        this.add(mc,  BorderLayout.CENTER);       // 左側に mc （キャンバス）を配置
-        this.setVisible(true); //可視化
-*/
         //サーバに接続する
         Socket socket = null;
         try {
             //"localhost"は，自分内部への接続．localhostを接続先のIP Address（"133.42.155.201"形式）に設定すると他のPCのサーバと通信できる
             //10000はポート番号．IP Addressで接続するPCを決めて，ポート番号でそのPC上動作するプログラムを特定する
-            InetSocketAddress endpoint= new InetSocketAddress("192.168.10.107",  10000);
+            InetSocketAddress endpoint= new InetSocketAddress("192.168.10.114",  10000);
             socket = new Socket();
             socket.connect(endpoint, 1000);
+
         } catch (UnknownHostException e) {
             System.err.println("ホストの IP アドレスが判定できません: " + e);
         } catch (IOException e) {
@@ -128,6 +142,8 @@ public class MyClient extends JFrame {
 
         Socket socket;
         static String myName;
+        static boolean isGameStart = false; //ゲームが開始されているかどうか
+        static boolean isQuestioner = false; //出題者かどうか
 
         public MesgRecvThread(Socket s, String n){
             socket = s;
@@ -153,7 +169,7 @@ public class MyClient extends JFrame {
                     String command = inputLine.substring(0,cmdIndex);//入力内容の分類
                     String recvStr = inputLine.substring(cmdIndex + 1 , endIndex);
 
-                    //userコマンドならnameListに追加
+            /*        //userコマンドならnameListに追加
                     if(command.equals("user")){
                         String[] user = recvStr.split(",");
                         System.out.println(user);
@@ -162,8 +178,12 @@ public class MyClient extends JFrame {
                             userList.append(name + "\n");
                         }
                     }
-                    else{
-                        mc.paint2(px, py, x, y);
+                    //msgコマンドならログリストに追加
+                    else if(command.equals("server")){
+                        logList.append( recvStr + "\n");
+                    }*/
+                    if(!command.equals("user") && !command.equals("server")){
+                        mc.myPaint(px, py, x, y);
                         mc.repaint();
                     }
 
@@ -172,27 +192,30 @@ public class MyClient extends JFrame {
 
                         //pointコマンドなら描画
                         if(command.equals("point")){
-                            System.out.println(command);
-                            String[] inputTokens = recvStr.split(" ");    //入力データを解析するために、スペースで切り分ける
 
-                            int px = Integer.parseInt(inputTokens[0]);//数値に変換する
-                            int py = Integer.parseInt(inputTokens[1]);//数値に変換する
-                            int x = Integer.parseInt(inputTokens[2]);//数値に変換する
-                            int y = Integer.parseInt(inputTokens[3]);//数値に変換する
-                            mc.paint2(px, py, x, y);
-                            mc.repaint();
+                                System.out.println(command);
+                                String[] inputTokens = recvStr.split(" ");    //入力データを解析するために、スペースで切り分ける
+
+                                int px = Integer.parseInt(inputTokens[0]);//数値に変換する
+                                int py = Integer.parseInt(inputTokens[1]);//数値に変換する
+                                int x = Integer.parseInt(inputTokens[2]);//数値に変換する
+                                int y = Integer.parseInt(inputTokens[3]);//数値に変換する
+                                mc.myPaint(px, py, x, y);
+                                mc.repaint();
+
+
                         }
 
                         //msgコマンドならログリストにメッセージを表示
                         else if(command.equals(("msg"))){
-                            String[] message = recvStr.split(",");//入力データを解析するために、, で切り分ける
-                            logList.setText("");
-                            for(String m : message){
-                                String[] splitMessage = m.split("\\.");
-                                logList.append( splitMessage[0] + ":" + splitMessage[1] + "\n");
-                            }
+                            String[] splitMessage = recvStr.split("\\.");
+                            logList.append( splitMessage[0] + ":" + splitMessage[1] + "\n");
+
                         }
 
+                        else if(command.equals("server")){
+                            logList.append(recvStr + "\n");
+                        }
                         //userコマンドならnameListに追加
                         else if(command.equals("user")){
                             String[] user = recvStr.split(",");
@@ -202,12 +225,51 @@ public class MyClient extends JFrame {
                             }
                         }
 
+                        //gameコマンドならフラグを反転
+                        else if(command.equals("game")){
+                            if(recvStr.equals("startGame")){
+                                this.isGameStart= true;
+                                logList.setText("");
+                            }
+                            else if(recvStr.equals("endGame")){
+                                this.isGameStart = false;
+                            }
+
+                        }
+
+                        //questionerコマンドで名前が自分と一致した場合
+                        else if(command.equals(("questioner"))){
+                            if(recvStr.equals(myName)){
+                                this.isQuestioner = true;
+                            }
+                        }
+
+                        else if(command.equals("question")) {
+                            if (this.isQuestioner) {
+                                questionField.setText("");
+                                questionField.setText("お題 : " + recvStr);
+                            }
+                            else{
+                                questionField.setText("");
+                                questionField.setText("お題 : ???");
+                            }
+                        }
+
+                        else if(command.equals("clear")){
+                            mc.gc.setColor(Color.WHITE);
+                            mc.gc.fillRect(0, 0, width, height);
+                            mc.repaint();
+                            mc.gc.setColor(Color.BLACK);
+                        }
+
+                        if(!this.isGameStart){
+                            isQuestioner = false;
+                            questionField.setText("");
+                        }
                     }else{
                         break;
                     }
-
                 }
-
                 socket.close();
             } catch (IOException e) {
                 System.err.println("エラーが発生しました: " + e);
@@ -230,14 +292,114 @@ public class MyClient extends JFrame {
         public void actionPerformed(ActionEvent e) {
             String inputMessage = answerText.getText();
 
+
             if(!inputMessage.equals((""))){
-                //サーバに情報を送る
-                //コマンド msg 名前とメッセージを , 区切りで挿入し送信
-                MyClient.out.println("msg:"  + MesgRecvThread.myName +  "."+ inputMessage);//送信データをバッファに書き出す
-                MyClient.out.flush();//送信データをフラッシュ（ネットワーク上にはき出す）する
+
+                boolean isSafety = true;
+
+                //文字列に禁止文字がふくまれていないか
+                String[] inputString = inputMessage.split("");
+
+                String[] badString = {"," , "." , ":" };
+                for(String s : inputString){
+                    for(int i = 0 ; i < badString.length ; i++) {
+                        if (s.contains(badString[i])){
+                            isSafety = false;
+                        }
+                    }
+                }
+
+                if(MesgRecvThread.isQuestioner){
+                    Object[] msg = { "あなたは出題者です" };
+                    JOptionPane.showMessageDialog( MyClient.c, msg, "Warning",
+                            JOptionPane.WARNING_MESSAGE );
+                }
+
+                else if(!isSafety){
+                    Object[] msg = { "使用できない文字が含まれています" };
+                    JOptionPane.showMessageDialog( MyClient.c, msg, "Warning",
+                            JOptionPane.WARNING_MESSAGE );
+                }
+                else {
+                    //サーバに情報を送る
+                    //コマンド msg 名前とメッセージを , 区切りで挿入し送信
+                    MyClient.out.println("msg:" + MesgRecvThread.myName + "." + inputMessage);//送信データをバッファに書き出す
+                    MyClient.out.flush();//送信データをフラッシュ（ネットワーク上にはき出す）する
+
+                    answerText.setText("");
+                }
             }
 
+        }
+    }
 
+    //リセットボタンを押したとき
+     class resetAction extends AbstractAction {
+        resetAction() {
+            putValue(Action.NAME, "画面リセット");
+            putValue(Action.SHORT_DESCRIPTION, "画面リセット");
+        }
+
+        public void actionPerformed(ActionEvent e) {
+
+            if(!MesgRecvThread.isQuestioner && MesgRecvThread.isGameStart){
+                Object[] msg = { "出題者でないためキャンバスクリアできません" };
+                JOptionPane.showMessageDialog( MyClient.c, msg, "Warning",
+                        JOptionPane.WARNING_MESSAGE );
+            }
+            else {
+                //サーバに情報を送る
+                //コマンド clear キャンバス画面をリセットするようサーバーに要求
+                MyClient.out.println("clear:canavsClear");//送信データをバッファに書き出す
+                MyClient.out.flush();//送信データをフラッシュ（ネットワーク上にはき出す）する
+            }
+        }
+    }
+
+    //ゲームスタートボタンを押したとき
+    class startAction extends AbstractAction {
+        startAction() {
+                putValue(Action.NAME, "ゲームスタート");
+                putValue(Action.SHORT_DESCRIPTION, "ゲームスタート");
+        }
+
+        public void actionPerformed(ActionEvent e) {
+
+            //ゲームが開始されていないとき
+            if(!MesgRecvThread.isGameStart){
+                //サーバに情報を送る
+                //コマンド game isGameStartフラグをTrueにするようにサーバーに要求
+                MyClient.out.println("game:startGame");//送信データをバッファに書き出す
+                MyClient.out.flush();//送信データをフラッシュ（ネットワーク上にはき出す）する
+            }
+            else{
+                Object[] msg = { "ゲームは開始されています" };
+                JOptionPane.showMessageDialog( MyClient.c, msg, "Warning",
+                        JOptionPane.WARNING_MESSAGE );
+            }
+        }
+    }
+
+    //ゲーム終了ボタンを押したとき
+    class endAction extends AbstractAction {
+        endAction() {
+            putValue(Action.NAME, "ゲーム終了");
+            putValue(Action.SHORT_DESCRIPTION, "ゲーム終了");
+        }
+
+        public void actionPerformed(ActionEvent e) {
+            //ゲームが開始されていないとき
+            if(MesgRecvThread.isGameStart){
+                //サーバに情報を送る
+                //コマンド game isGameStartフラグをFalseにするようにサーバーに要求
+                MyClient.out.println("game:endGame");//送信データをバッファに書き出す
+                MyClient.out.flush();//送信データをフラッシュ（ネットワーク上にはき出す）する
+            }
+            else{
+                Object[] msg = { "ゲームは開始されていません" };
+                JOptionPane.showMessageDialog( MyClient.c, msg, "Warning",
+                        JOptionPane.WARNING_MESSAGE );
+            }
         }
     }
 }
@@ -247,8 +409,6 @@ class MyCanvas extends Canvas implements MouseListener, MouseMotionListener {
     // ■ フィールド変数
     int x, y;   // mouse pointer position
     int px, py; // preliminary position
-    int ow, oh; // width and height of the object
-    int mode;   // drawing mode associated as below
     Image img = null;   // 仮の画用紙
     Graphics gc = null; // 仮の画用紙用のペン
     Dimension d; // キャンバスの大きさ取得用
@@ -264,71 +424,67 @@ class MyCanvas extends Canvas implements MouseListener, MouseMotionListener {
         client = obj;
     }
 
-    // ■ メソッド（オーバーライド）
+    @Override
     // フレームに何らかの更新が行われた時の処理
     public void update(Graphics g) {
-        paint(g); // 下記の paint を呼び出す
+        paint(g); // paint を呼び出す
     }
 
-    // ■ メソッド（オーバーライド）
+    @Override
     public void paint(Graphics g) {
         d = getSize();   // キャンバスのサイズを取得
         if (img == null) // もし仮の画用紙の実体がまだ存在しなければ
             img = createImage(d.width, d.height); // 作成
-        if (gc == null)  // もし仮の画用紙用のペン (GC) がまだ存在しなければ
+        if (gc == null)  // もし仮の画用紙用のペン (gc) がまだ存在しなければ
             gc = img.getGraphics(); // 作成
 
-        paint2(px,py,x,y);
+        myPaint(px,py,x,y);
 
         g.drawImage(img, 0, 0, this); // 仮の画用紙の内容を MyCanvas に描画
     }
 
-    public void paint2(int px, int py, int x, int y){
+    public void myPaint(int px, int py, int x, int y){
         gc.drawLine(px, py, x, y);
     }
 
+    public void mouseClicked(MouseEvent e){}// 使わないけど、無いとコンパイルエラー
+    public void mouseEntered(MouseEvent e){}// 使わないけど無いとコンパイルエラー
+    public void mouseExited(MouseEvent e){} // 使わないけど無いとコンパイルエラー
 
-    // ■ メソッド
-    // 下記のマウス関連のメソッドは，MouseListener をインターフェースとして実装しているため
-    // 例え使わなくても必ず実装しなければならない
-    public void mouseClicked(MouseEvent e){}// 今回は使わないが、無いとコンパイルエラー
-    public void mouseEntered(MouseEvent e){
-        //System.out.println("マウスが入った");
-    }// 今回は使わないが、無いとコンパイルエラー
-    public void mouseExited(MouseEvent e){
-        //System.out.println("マウス脱出");
-    } // 今回は使わないが、無いとコンパイルエラー
-    public void mousePressed(MouseEvent e){ // マウスボタンが押された時の処理
+    public void mousePressed(MouseEvent e){ // マウスボタンが押された時
         System.out.println("マウスを押した");
         x = e.getX();
         y = e.getY();
         System.out.println(x+", "+y);
 
     }
-    public void mouseReleased(MouseEvent e){ // マウスボタンが離された時の処理
+    public void mouseReleased(MouseEvent e){ // マウスボタンが離された時
         System.out.println("マウスを放した");
     }
 
-    // ■ メソッド
-    // 下記のマウス関連のメソッドは，MouseMotionListener をインターフェースとして実装しているため
-    // 例え使わなくても必ず実装しなければならない
     public void mouseDragged(MouseEvent e){ // マウスがドラッグされた時の処理
-        System.out.println("マウスをドラッグ");
-        px = x;
-        py = y;
-        x = e.getX();
-        y = e.getY();
-        System.out.println(px+", "+py+", "+x+", "+y);
+        if(MyClient.MesgRecvThread.isQuestioner || !MyClient.MesgRecvThread.isGameStart) {
+            System.out.println("マウスをドラッグ");
+            px = x;
+            py = y;
+            x = e.getX();
+            y = e.getY();
+            System.out.println(px + ", " + py + ", " + x + ", " + y);
 
-        //送信情報を作成する（受信時には，この送った順番にデータを取り出す．スペースがデータの区切りとなる）
-        String msg = "point:"  + px+" "+py+" "+x+" "+y;
+            //送信情報を作成する（受信時には，この送った順番にデータを取り出す．スペースがデータの区切りとなる）
+            String msg = "point:" + px + " " + py + " " + x + " " + y;
 
-        //サーバに情報を送る
-        client.out.println(msg);//送信データをバッファに書き出す
-        client.out.flush();//送信データをフラッシュ（ネットワーク上にはき出す）する
-        repaint(); // 再描画
+            //サーバに情報を送る
+            client.out.println(msg);//送信データをバッファに書き出す
+            client.out.flush();//送信データをフラッシュ（ネットワーク上にはき出す）する
+            repaint(); // 再描画
+        }
+        else{
+            Object[] msg = { "出題者ではないためキャンバスに書き込めません" };
+            JOptionPane.showMessageDialog( MyClient.c, msg, "Warning",
+                    JOptionPane.WARNING_MESSAGE );
+        }
     }
-    public void mouseMoved(MouseEvent e){
-        //System.out.println("マウスをドラッグ");
-    } // 今回は使わないが、無いとコンパイルエラー
+    public void mouseMoved(MouseEvent e){} // 使わないけど無いとコンパイルエラー
+
 }

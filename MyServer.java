@@ -7,6 +7,7 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Collections;
 
 //スレッド部（各クライアントに応じて）
 class ClientProcThread extends Thread {
@@ -16,6 +17,9 @@ class ClientProcThread extends Thread {
     private BufferedReader myIn;
     private PrintWriter myOut;
     private String myName;//接続者の名前
+
+    private static boolean isGameStart = false;
+    private String question = ""; //お題
 
     MyServer server = new MyServer();
 
@@ -35,10 +39,10 @@ class ClientProcThread extends Thread {
 
             MyServer.addUser((myName));
 
+            MyServer.SendAll("server:"  + myName + "さんが入室しました", myName);
 
             //誰かが接続したら全員に名前のリストを送る
             MyServer.SendAll(MyServer.createUserList(MyServer.getUserName() ), myName);
-
 
             while (true) {//無限ループで，ソケットへの入力を監視する
 
@@ -46,18 +50,62 @@ class ClientProcThread extends Thread {
 
                 int cmdIndex = str.indexOf(":");
                 int endIndex = str.length();
-                String cmd = str.substring(0,cmdIndex);//入力内容の分類
-                String sendStr = str.substring(cmdIndex + 1 , endIndex);
+                String cmd = str.substring(0,cmdIndex);//メッセージに付与されているコマンド
+                String recvStr = str.substring(cmdIndex + 1 , endIndex);//コマンドを除去した受け取ったメッセージ
 
                 //描画している時
                 if(cmd.equals("point")){
-                   System.out.println( +number+"("+myName+"), Point: "+sendStr);
-                   MyServer.SendAll("point:"+sendStr , myName);//サーバに来たメッセージは接続しているクライアント全員に配る
+                   System.out.println( +number+"("+myName+"), Point: "+recvStr);
+                   MyServer.SendAll("point:"+recvStr , myName);//サーバに来たメッセージは接続しているクライアント全員に配る
                 }
                 else if(cmd.equals("msg")){
-                    MyServer.addMsg((sendStr));
-                    MyServer.SendAll(MyServer.createMsgList(MyServer.getMessageList()) , myName);//サーバに来たメッセージは接続しているクライアント全員に配る
+                  //  MyServer.addMsg((recvStr));
+                  //  MyServer.SendAll(MyServer.createMsgList(MyServer.getMessageList()) , myName);//サーバに来たメッセージは接続しているクライアント全員に配る
+                    MyServer.SendAll("msg:" + recvStr , myName);//サーバに来たメッセージは接続しているクライアント全員に配る
+
+                    if(this.isGameStart){
+                        String[] answerList = recvStr.split("\\.");
+                        String answerUserName = answerList[0];
+                        String answer  = answerList[1];
+
+                        if(this.question.equals(answer)){
+                            MyServer.SendAll("server:" + answerUserName + "さん正解です" , myName);//正解者の情報を全員に配る
+                            MyServer.SendAll("server: 正解は" + answer + "です" , myName);//正解者の情報を全員に配る
+                            MyServer.SendAll("game:endGame" , myName);//ゲーム終了の情報を全員に配る
+                            MyServer.SendAll("server:ゲームが終了しました" , myName);//ゲーム開始の情報を全員に配る
+                            ClientProcThread.isGameStart = false;
+                        }
+                    }
                 }
+                else if(cmd.equals("game")){
+                    if(recvStr.equals("startGame")){
+                        ClientProcThread.isGameStart = true;
+                        MyServer.SendAll("game:startGame" , myName);//ゲーム開始の情報を全員に配る
+                        //ゲームが開始されたらログをリセット
+                     //   MyServer.resetArrayList(MyServer.getMessageList());
+                        MyServer.SendAll("server:ゲームが開始されました" , myName);//ゲーム開始の情報を全員に配る
+
+                        //ゲームが始まったときランダムに出題者を決め、クライアントに送信
+                        String questioner = MyServer.getRandomQuestioner(MyServer.getUserName());
+                        MyServer.SendAll("clear:canvasClear" , myName);//ゲーム開始時にキャンバスをクリア
+                        MyServer.SendAll("questioner:" + questioner, myName);//出題者の情報を全員に配る
+                        MyServer.SendAll("server:出題者は" +  questioner + "さんです", myName);//出題者の情報を全員に配る
+
+                        question = "ピカチュウ";
+                        //出題
+                        MyServer.SendAll("question:" +  question, myName);//お題の情報を全員に配る
+                    }
+                    else if(recvStr.equals("endGame")){
+                        ClientProcThread.isGameStart = false;
+                        MyServer.SendAll("game:endGame" , myName);//ゲーム終了の情報を全員に配る
+                        MyServer.SendAll("server:ゲームが終了しました" , myName);//ゲーム開始の情報を全員に配る
+                    }
+                }
+
+                else if(cmd.equals("clear")){
+                    MyServer.SendAll("clear:canvasClear" , myName);//キャンバスリセットの情報を全員に配る
+                }
+
 
                 System.out.println("Received from client No."+number+"("+myName+"), Messages: "+str + "(" + cmd + ")");
 
@@ -75,6 +123,9 @@ class ClientProcThread extends Thread {
             MyServer.SetFlag(number, false);//接続が切れたのでフラグを下げる
             //誰かが切れたらユーザリストを更新するために全員に新しいリストを送信
             MyServer.SendAll(MyServer.createUserList(MyServer.getUserName() ), myName);
+
+            MyServer.SendAll("server:"  + myName + "さんが退室しました", myName);
+
         }
     }
 }
@@ -123,14 +174,11 @@ class MyServer{
 
     public static ArrayList<String> getUserName(){return userName;}
 
-    //メッセージを管理するリストにユーザーを追加
-    public static void addMsg(String msg){
-        msgList.add(msg);
+    public static String getRandomQuestioner(ArrayList<String> userList){
+        ArrayList<String> randomUserlist = (ArrayList<String>) userList.clone();
+        Collections.shuffle(randomUserlist);
+        return randomUserlist.get(0);
     }
-
-
-    public static ArrayList<String> getMessageList(){return msgList;}
-
 
     public static String createUserList(ArrayList<String> user){
         String userList = "user:";
@@ -140,15 +188,6 @@ class MyServer{
         return userList;
     }
 
-    public static String createMsgList(ArrayList<String> msg){
-        String msgList = "msg:";
-        for(String m : msg){
-            msgList += m + ",";
-        }
-        return msgList;
-    }
-
-    //mainプログラム
     public static void main(String[] args) {
         //必要な配列を確保する
         incoming = new Socket[maxConnection];
