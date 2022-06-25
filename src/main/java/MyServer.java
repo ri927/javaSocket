@@ -1,5 +1,3 @@
-package finalEx.game;
-
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
@@ -20,6 +18,9 @@ class ClientProcThread extends Thread {
 
     private static boolean isGameStart = false;
     private String question = ""; //お題
+
+    PokemonSearcher pokeSearch = new PokemonSearcher();
+    ArrayList<PokemonItem> itemList = pokeSearch.getItemList();
 
     MyServer server = new MyServer();
 
@@ -91,7 +92,7 @@ class ClientProcThread extends Thread {
                         MyServer.SendAll("questioner:" + questioner, myName);//出題者の情報を全員に配る
                         MyServer.SendAll("server:出題者は" +  questioner + "さんです", myName);//出題者の情報を全員に配る
 
-                        question = "ピカチュウ";
+                        question = pokeSearch.getRandomPokemon(itemList);
                         //出題
                         MyServer.SendAll("question:" +  question, myName);//お題の情報を全員に配る
                     }
