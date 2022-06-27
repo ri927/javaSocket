@@ -1,6 +1,3 @@
-package finalEx.game;
-
-
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 import javax.swing.text.DefaultCaret;
