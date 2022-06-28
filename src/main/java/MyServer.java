@@ -73,7 +73,7 @@ class ServerThread extends Thread {
                         String answerUserName = answerList[0];
                         String answer  = answerList[1];
 
-                        if(this.question.equals(answer)){
+                        if(question.equals(answer)){
                             MyServer.SendAll("server:" + answerUserName + "さん正解です" , myName);//正解者の情報を全員に配る
                             MyServer.SendAll("server: 正解は" + answer + "です" , myName);//正解者の情報を全員に配る
                             MyServer.SendAll("game:endGame" , myName);//ゲーム終了の情報を全員に配る
@@ -117,13 +117,13 @@ class ServerThread extends Thread {
                     MyServer.SendAll("clear:canvasClear" , myName);//キャンバスリセットの情報を全員に配る
                 }
 
-                else if(cmd.equals("stroke")){
+        /*        else if(cmd.equals("stroke")){
                     MyServer.SendAll("stroke:" + recvStr , myName);
-                }
+                }*/
 
-                else if(cmd.equals("color")){
+            /*    else if(cmd.equals("color")){
                     MyServer.SendAll("color:" + recvStr , myName);
-                }
+                }*/
 
                 //全員が抜けたらゲームを強制終了
                 if(MyServer.getUserName().size() == 0){
