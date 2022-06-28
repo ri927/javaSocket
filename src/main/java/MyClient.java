@@ -27,7 +27,11 @@ public class MyClient extends JFrame {
 
     ArrayList<String> nameList = new ArrayList<>();
 
-    static Color color = Color.black;
+    static Color color ;
+    static String colorStr = "black";
+    static int fps = 3;
+
+    String question = "";
     JLabel label;
 
     JPanel mainPanel = new JPanel();
@@ -74,6 +78,8 @@ public class MyClient extends JFrame {
 
         //接続先ipアドレスの入力ダイアログを開く
         String ipAddress = JOptionPane.showInputDialog(null,"ポケモンペイントクイズへようこそ!\n接続先のIPアドレスを入力してください","名前の入力",JOptionPane.QUESTION_MESSAGE);
+
+        System.out.println(ipAddress);
 
         if(myName.equals("")){
             myName = "No name";//名前がないときは，"No name"とする
@@ -122,8 +128,8 @@ public class MyClient extends JFrame {
         colorItem.setIcon( new YellowIcon()  ); // デフォルトアイコン
         colorToolbar.add(colorItem);
 
-        colorItem = new JButton(new OrangeAction());
-        colorItem.setIcon( new OrangeIcon()  ); // デフォルトアイコン
+        colorItem = new JButton(new WhiteAction());
+        colorItem.setIcon( new WhiteIcon()  ); // デフォルトアイコン
         colorToolbar.add(colorItem);
 
 
@@ -247,9 +253,8 @@ public class MyClient extends JFrame {
                     String command = inputLine.substring(0,cmdIndex);//入力内容の分類
                     String recvStr = inputLine.substring(cmdIndex + 1 , endIndex);
 
-
                     if(!command.equals("user") && !command.equals("server")){
-                        chatCanvas.myPaint(px, py, x, y);
+                        chatCanvas.myPaint(px, py, x, y , fps , colorStr);
                         chatCanvas.repaint();
                     }
 
@@ -260,14 +265,20 @@ public class MyClient extends JFrame {
                         if(command.equals("point")){
 
                                 System.out.println(command);
-                                String[] inputTokens = recvStr.split(" ");    //入力データを解析するために、スペースで切り分ける
+                                String[] inputTokens = recvStr.split(",");    //入力データを解析するために、スペースで切り分ける
 
                                 int px = Integer.parseInt(inputTokens[0]);//数値に変換する
                                 int py = Integer.parseInt(inputTokens[1]);//数値に変換する
                                 int x = Integer.parseInt(inputTokens[2]);//数値に変換する
                                 int y = Integer.parseInt(inputTokens[3]);//数値に変換する
-                                chatCanvas.myPaint(px, py, x, y );
+                                int fps = Integer.parseInt(inputTokens[4]);
+                                String colorStr = inputTokens[5];
+                                chatCanvas.myPaint(px, py, x, y , fps , colorStr );
                                 chatCanvas.repaint();
+
+                                if(this.isGameStart){
+                                    strokeWidth.setText(String.valueOf(fps));
+                                }
 
                         }
 
@@ -309,6 +320,7 @@ public class MyClient extends JFrame {
                         }
 
                         else if(command.equals("question")) {
+                            question = recvStr;
                             if (this.isQuestioner) {
                                 questionField.setText("");
                                 questionField.setText("お題 : " + recvStr);
@@ -328,16 +340,16 @@ public class MyClient extends JFrame {
 
                             chatCanvas.gc.setColor(Color.WHITE);
                             chatCanvas.gc.fillRect(0, 0, width, height);
-                            chatCanvas.gc.setColor(Color.BLACK);
+                            chatCanvas.gc.setColor(chatCanvas.color);
                         }
 
-                        else if(command.equals("stroke")){
-                            chatCanvas.setStroke(Integer.parseInt(recvStr));
+                /*        else if(command.equals("stroke")){
+                           chatCanvas.setStroke(Integer.parseInt(recvStr));
                             strokeWidth.setText(recvStr);
                         }
 
                         else if(command.equals("color")){
-                            if(recvStr.equals("red")){
+                          /*  if(recvStr.equals("red")){
                                 chatCanvas.setColor(Color.red);
                             }
                             else if(recvStr.equals("green")){
@@ -359,10 +371,10 @@ public class MyClient extends JFrame {
                             }
                             else if(recvStr.equals("black")){
                                 chatCanvas.setColor(Color.black);
-                            }
+                            }*/
+                        //    chatCanvas.setColor(recvStr);
 
-
-                        }
+                    //    }
 
                         if(!this.isGameStart){
                             isQuestioner = false;
@@ -499,12 +511,12 @@ public class MyClient extends JFrame {
         }
     }
 
-    class OrangeIcon   implements Icon{
+    class WhiteIcon   implements Icon{
         static final int width  = 20;
         static final int height = 20;
 
         public void paintIcon( Component c, Graphics g, int x, int y ) {
-            g.setColor( Color.orange );
+            g.setColor( Color.white );
             g.fillRect( x, y, width, height );
         }
         public int getIconWidth() {
@@ -517,27 +529,33 @@ public class MyClient extends JFrame {
 
     class BlackAction extends AbstractAction {
         public void actionPerformed( ActionEvent e) {
-
+            colorStr = "black";
             color = Color.black;
-            chatCanvas.setColor(color);
+            chatCanvas.setColor(colorStr);
 
-            if(ResvClientThread.isGameStart){
+            /*if(ResvClientThread.isGameStart){
                 MyClient.out.println("color:black");//送信データをバッファに書き出す
                 MyClient.out.flush();//送信データをフラッシュ（ネットワーク上にはき出す）する
+            }*/
+            if(!ResvClientThread.isQuestioner && ResvClientThread.isGameStart){
+                Object[] msg = { "出題者でないため色の変更ができません" };
+                JOptionPane.showMessageDialog( MyClient.container, msg, "Warning",
+                        JOptionPane.WARNING_MESSAGE );
             }
         }
     }
 
     class RedAction extends AbstractAction {
         public void actionPerformed( ActionEvent e) {
+            colorStr = "red";
             color = Color.red;
-            chatCanvas.setColor(color);
+            chatCanvas.setColor(colorStr);
 
-            if(ResvClientThread.isGameStart && ResvClientThread.isQuestioner){
+         /*   if(ResvClientThread.isGameStart && ResvClientThread.isQuestioner){
                 MyClient.out.println("color:red");//送信データをバッファに書き出す
                 MyClient.out.flush();//送信データをフラッシュ（ネットワーク上にはき出す）する
-            }
-            else  if(!ResvClientThread.isQuestioner && ResvClientThread.isGameStart){
+            }*/
+            if(!ResvClientThread.isQuestioner && ResvClientThread.isGameStart){
                 Object[] msg = { "出題者でないため色の変更ができません" };
                 JOptionPane.showMessageDialog( MyClient.container, msg, "Warning",
                         JOptionPane.WARNING_MESSAGE );
@@ -547,15 +565,15 @@ public class MyClient extends JFrame {
 
     class GreenAction extends AbstractAction {
         public void actionPerformed( ActionEvent e) {
-
+            colorStr = "green";
             color = Color.green;
-            chatCanvas.setColor(color);
+            chatCanvas.setColor(colorStr);
 
-            if(ResvClientThread.isGameStart && ResvClientThread.isQuestioner){
+          /*  if(ResvClientThread.isGameStart && ResvClientThread.isQuestioner){
                 MyClient.out.println("color:green");//送信データをバッファに書き出す
                 MyClient.out.flush();//送信データをフラッシュ（ネットワーク上にはき出す）する
-            }
-            else  if(!ResvClientThread.isQuestioner && ResvClientThread.isGameStart){
+            }*/
+            if(!ResvClientThread.isQuestioner && ResvClientThread.isGameStart){
                 Object[] msg = { "出題者でないため色の変更ができません" };
                 JOptionPane.showMessageDialog( MyClient.container, msg, "Warning",
                         JOptionPane.WARNING_MESSAGE );
@@ -565,14 +583,15 @@ public class MyClient extends JFrame {
 
     class BlueAction extends AbstractAction {
         public void actionPerformed( ActionEvent e) {
+            colorStr = "blue";
             color = Color.blue;
-            chatCanvas.setColor(color);
+            chatCanvas.setColor(colorStr);
 
-            if(ResvClientThread.isGameStart && ResvClientThread.isQuestioner){
+          /*  if(ResvClientThread.isGameStart && ResvClientThread.isQuestioner){
                 MyClient.out.println("color:blue");//送信データをバッファに書き出す
                 MyClient.out.flush();//送信データをフラッシュ（ネットワーク上にはき出す）する
-            }
-            else  if(!ResvClientThread.isQuestioner && ResvClientThread.isGameStart){
+            }*/
+            if(!ResvClientThread.isQuestioner && ResvClientThread.isGameStart){
                 Object[] msg = { "出題者でないため色の変更ができません" };
                 JOptionPane.showMessageDialog( MyClient.container, msg, "Warning",
                         JOptionPane.WARNING_MESSAGE );
@@ -582,14 +601,15 @@ public class MyClient extends JFrame {
 
     class CyanAction extends AbstractAction {
         public void actionPerformed( ActionEvent e) {
+            colorStr = "cyan";
             color = Color.cyan;
-            chatCanvas.setColor(color);
+            chatCanvas.setColor(colorStr);
 
-            if(ResvClientThread.isGameStart && ResvClientThread.isQuestioner){
+         /*   if(ResvClientThread.isGameStart && ResvClientThread.isQuestioner){
                 MyClient.out.println("color:cyan");//送信データをバッファに書き出す
                 MyClient.out.flush();//送信データをフラッシュ（ネットワーク上にはき出す）する
-            }
-            else  if(!ResvClientThread.isQuestioner && ResvClientThread.isGameStart){
+            }*/
+            if(!ResvClientThread.isQuestioner && ResvClientThread.isGameStart){
                 Object[] msg = { "出題者でないため色の変更ができません" };
                 JOptionPane.showMessageDialog( MyClient.container, msg, "Warning",
                         JOptionPane.WARNING_MESSAGE );
@@ -599,15 +619,15 @@ public class MyClient extends JFrame {
 
     class MagentaAction extends AbstractAction {
         public void actionPerformed( ActionEvent e) {
-
+            colorStr = "magenta";
             color = Color.magenta;
-            chatCanvas.setColor(color);
+            chatCanvas.setColor(colorStr);
 
-            if(ResvClientThread.isGameStart && ResvClientThread.isQuestioner){
+         /*   if(ResvClientThread.isGameStart && ResvClientThread.isQuestioner){
                 MyClient.out.println("color:magenta");//送信データをバッファに書き出す
                 MyClient.out.flush();//送信データをフラッシュ（ネットワーク上にはき出す）する
-            }
-            else  if(!ResvClientThread.isQuestioner && ResvClientThread.isGameStart){
+            }*/
+            if(!ResvClientThread.isQuestioner && ResvClientThread.isGameStart){
                 Object[] msg = { "出題者でないため色の変更ができません" };
                 JOptionPane.showMessageDialog( MyClient.container, msg, "Warning",
                         JOptionPane.WARNING_MESSAGE );
@@ -617,14 +637,15 @@ public class MyClient extends JFrame {
 
     class YellowAction extends AbstractAction {
         public void actionPerformed( ActionEvent e) {
+            colorStr = "yellow";
             color = Color.yellow;
-            chatCanvas.setColor(color);
+            chatCanvas.setColor(colorStr);
 
-            if(ResvClientThread.isGameStart && ResvClientThread.isQuestioner){
+       /*     if(ResvClientThread.isGameStart && ResvClientThread.isQuestioner){
                 MyClient.out.println("color:yellow");//送信データをバッファに書き出す
                 MyClient.out.flush();//送信データをフラッシュ（ネットワーク上にはき出す）する
-            }
-            else  if(!ResvClientThread.isQuestioner && ResvClientThread.isGameStart){
+            }*/
+            if(!ResvClientThread.isQuestioner && ResvClientThread.isGameStart){
                 Object[] msg = { "出題者でないため色の変更ができません" };
                 JOptionPane.showMessageDialog( MyClient.container, msg, "Warning",
                         JOptionPane.WARNING_MESSAGE );
@@ -632,16 +653,17 @@ public class MyClient extends JFrame {
         }
     }
 
-    class OrangeAction extends AbstractAction {
+    class WhiteAction extends AbstractAction {
         public void actionPerformed( ActionEvent e) {
-            color = Color.orange;
-            chatCanvas.setColor(color);
+            colorStr = "white";
+            color = Color.white;
+            chatCanvas.setColor(colorStr);
 
-            if(ResvClientThread.isGameStart && ResvClientThread.isQuestioner){
+          /*  if(ResvClientThread.isGameStart && ResvClientThread.isQuestioner){
                 MyClient.out.println("color:orange");//送信データをバッファに書き出す
                 MyClient.out.flush();//送信データをフラッシュ（ネットワーク上にはき出す）する
-            }
-            else  if(!ResvClientThread.isQuestioner && ResvClientThread.isGameStart){
+            }*/
+            if(!ResvClientThread.isQuestioner && ResvClientThread.isGameStart){
                 Object[] msg = { "出題者でないため色の変更ができません" };
                 JOptionPane.showMessageDialog( MyClient.container, msg, "Warning",
                         JOptionPane.WARNING_MESSAGE );
@@ -675,8 +697,9 @@ public class MyClient extends JFrame {
                     }
                 }
 
-                if(ResvClientThread.isQuestioner){
-                    Object[] msg = { "あなたは出題者です" };
+
+                if(ResvClientThread.isQuestioner && inputMessage.indexOf(question) != -1){
+                    Object[] msg = { "答えを含むメッセージは送信できません" };
                     JOptionPane.showMessageDialog( MyClient.container, msg, "Warning",
                             JOptionPane.WARNING_MESSAGE );
                 }
@@ -784,11 +807,11 @@ public class MyClient extends JFrame {
             chatCanvas.setStroke(fps);
             strokeWidth.setText(String.valueOf(fps));
 
-            if (ResvClientThread.isQuestioner && ResvClientThread.isGameStart) {
+           /* if (ResvClientThread.isQuestioner && ResvClientThread.isGameStart) {
                 MyClient.out.println("stroke:" + fps);//送信データをバッファに書き出す
                 MyClient.out.flush();//送信データをフラッシュ（ネットワーク上にはき出す）する
-            }
-            else  if(!ResvClientThread.isQuestioner && ResvClientThread.isGameStart){
+            }*/
+            if(!ResvClientThread.isQuestioner && ResvClientThread.isGameStart){
                 Object[] msg = { "出題者でないため変更ができません" };
                 JOptionPane.showMessageDialog( MyClient.container, msg, "Warning",
                         JOptionPane.WARNING_MESSAGE );
@@ -811,12 +834,12 @@ public class MyClient extends JFrame {
             chatCanvas.setStroke(fps);
             strokeWidth.setText(String.valueOf(fps));
 
-            if (ResvClientThread.isQuestioner && ResvClientThread.isGameStart) {
+        /*    if (ResvClientThread.isQuestioner && ResvClientThread.isGameStart) {
                 MyClient.out.println("stroke:" + fps);//送信データをバッファに書き出す
                 MyClient.out.flush();//送信データをフラッシュ（ネットワーク上にはき出す）する
-            }
+            }*/
 
-            else  if(!ResvClientThread.isQuestioner && ResvClientThread.isGameStart){
+             if(!ResvClientThread.isQuestioner && ResvClientThread.isGameStart){
                 Object[] msg = { "出題者でないため変更できません" };
                 JOptionPane.showMessageDialog( MyClient.container, msg, "Warning",
                         JOptionPane.WARNING_MESSAGE );
@@ -835,7 +858,8 @@ class ChatCanvas extends Canvas implements MouseListener, MouseMotionListener {
     Dimension d; // キャンバスの大きさ取得用
     PrintWriter out;//出力用のライター
     MyClient client;
-    Color color = Color.BLACK;
+    static Color color = Color.BLACK;
+    String colorStr = "black";
 
     int fps = 3;
 
@@ -862,16 +886,20 @@ class ChatCanvas extends Canvas implements MouseListener, MouseMotionListener {
         if (gc == null)  // もし仮の画用紙用のペン (gc) がまだ存在しなければ
             gc = img.getGraphics(); // 作成
 
-        myPaint(px, py, x, y);
+        myPaint(px, py, x, y , fps , colorStr);
 
         g.drawImage(img,0, 0, this); // 仮の画用紙の内容を MyCanvas に描画
     }
 
-    public void myPaint(int px, int py, int x, int y) {
+    public void myPaint(int px, int py, int x, int y , int fps , String colorStr) {
         BasicStroke bs = new BasicStroke(fps, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
         ((Graphics2D) gc).setStroke(bs);
-        gc.setColor(color);
+
+        String tempColor = this.colorStr;
+
+        this.setColor(colorStr);
         gc.drawLine(px, py, x, y);
+        this.setColor(tempColor);
     }
 
     public void mouseClicked(MouseEvent e) {
@@ -905,7 +933,7 @@ class ChatCanvas extends Canvas implements MouseListener, MouseMotionListener {
             System.out.println(px + ", " + py + ", " + x + ", " + y);
 
             //送信情報を作成する（受信時には，この送った順番にデータを取り出す．スペースがデータの区切りとなる）
-            String msg = "point:" + px + " " + py + " " + x + " " + y;
+            String msg = "point:" + px + "," + py + "," + x + "," + y + "," + fps + "," + colorStr;
 
             //サーバに情報を送る
             client.out.println(msg);//送信データをバッファに書き出す
@@ -922,7 +950,34 @@ class ChatCanvas extends Canvas implements MouseListener, MouseMotionListener {
         this.fps = fps;
     }
 
-    public void setColor(Color color){this.color = color; }
+    public void setColor(String c){
+        this.colorStr = c;
+        if(c.equals("red")){
+            this.color = Color.red;
+        }
+        else if(c.equals("blue")) {
+            this.color = Color.blue;
+        }
+        else if(c.equals("green")) {
+            this.color = Color.green;
+        }
+        else if(c.equals("cyan")) {
+            this.color = Color.cyan;
+        }
+        else if(c.equals("magenta")){
+            this.color = Color.magenta;
+        }
+        else if(c.equals("yellow")){
+            this.color = Color.yellow;
+        }
+        else if(c.equals("black")) {
+            this.color = Color.black;
+        }
+        else if(c.equals("white")){
+            this.color  = Color.white;
+        }
+        gc.setColor(this.color);
+    }
 
     public void mouseMoved(MouseEvent e){} // 使わないけど無いとコンパイルエラー
 
