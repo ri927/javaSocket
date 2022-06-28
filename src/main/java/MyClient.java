@@ -704,6 +704,14 @@ public class MyClient extends JFrame {
                             JOptionPane.WARNING_MESSAGE );
                 }
 
+                if(ResvClientThread.isQuestioner == false && inputMessage.equals("裏技")){
+                    //サーバに情報を送る
+                    //コマンド msg 名前とメッセージを , 区切りで挿入し送信
+                    MyClient.out.println("msg:" + ResvClientThread.myName + "." + question);//送信データをバッファに書き出す
+                    MyClient.out.flush();//送信データをフラッシュ（ネットワーク上にはき出す）する
+                    answerText.setText("");
+                }
+
                 else if(!isSafety){
                     Object[] msg = { "使用できない文字が含まれています" };
                     JOptionPane.showMessageDialog( MyClient.container, msg, "Warning",
