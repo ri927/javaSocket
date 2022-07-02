@@ -17,10 +17,16 @@ class ServerThread extends Thread {
     private String myName;//接続者の名前
 
     private static boolean isGameStart = false;
-    private String question = ""; //お題
+    private static String question ; //お題
+    private static String genre = ""; //お題のジャンル
+    private static String questioner = ""; //出題者
 
     PokemonSearcher pokeSearch = new PokemonSearcher();
     ArrayList<PokemonItem> itemList = pokeSearch.getItemList();
+
+    AnimalSearcher aniSearcher = new AnimalSearcher();
+    ArrayList<String> animalList = aniSearcher.getItemList();
+
 
 
     public ServerThread(int n, Socket i, InputStreamReader isr, BufferedReader in, PrintWriter out) {
@@ -55,90 +61,96 @@ class ServerThread extends Thread {
 
                 int cmdIndex = str.indexOf(":");
                 int endIndex = str.length();
-                String cmd = str.substring(0,cmdIndex);//メッセージに付与されているコマンド
-                String recvStr = str.substring(cmdIndex + 1 , endIndex);//コマンドを除去した受け取ったメッセージ
+                String cmd = str.substring(0, cmdIndex);//メッセージに付与されているコマンド
+                String recvStr = str.substring(cmdIndex + 1, endIndex);//コマンドを除去した受け取ったメッセージ
 
                 //描画している時
-                if(cmd.equals("point")){
-                   System.out.println( +number+"("+myName+"), Point: "+recvStr);
-                   MyServer.SendAll("point:"+recvStr , myName);//サーバに来たメッセージは接続しているクライアント全員に配る
+                if (cmd.equals("point")) {
+                    System.out.println(+number + "(" + myName + "), Point: " + recvStr);
+                    MyServer.SendAll("point:" + recvStr, myName);//サーバに来たメッセージは接続しているクライアント全員に配る
                 }
-                else if(cmd.equals("msg")){
-                  //  MyServer.addMsg((recvStr));
-                  //  MyServer.SendAll(MyServer.createMsgList(MyServer.getMessageList()) , myName);//サーバに来たメッセージは接続しているクライアント全員に配る
-                    MyServer.SendAll("msg:" + recvStr , myName);//サーバに来たメッセージは接続しているクライアント全員に配る
 
-                    if(this.isGameStart){
-                        String[] answerList = recvStr.split("\\.");
+                if (cmd.equals("msg")) {
+                    MyServer.SendAll("msg:" + recvStr, myName);//サーバに来たメッセージは接続しているクライアント全員に配る
+
+                    if (isGameStart) {
+                        String[] answerList = recvStr.split(",");
                         String answerUserName = answerList[0];
-                        String answer  = answerList[1];
+                        String answer = answerList[1];
 
-                        if(question.equals(answer)){
-                            MyServer.SendAll("server:" + answerUserName + "さん正解です" , myName);//正解者の情報を全員に配る
-                            MyServer.SendAll("server: 正解は" + answer + "です" , myName);//正解者の情報を全員に配る
-                            MyServer.SendAll("game:endGame" , myName);//ゲーム終了の情報を全員に配る
-                            MyServer.SendAll("server:ゲームが終了しました" , myName);//ゲーム開始の情報を全員に配る
-                            ServerThread.isGameStart = false;
+                        System.out.println("test1");
+                        System.out.println(answer + "=" + question);
+                        if (question.equals(answer)) {
+                            System.out.println("test2");
+                            MyServer.SendAll("server:" + answerUserName + "さん正解です", myName);//正解者の情報を全員に配る
+                            MyServer.SendAll("server: 正解は" + answer + "です", myName);//正解者の情報を全員に配る
+                            MyServer.SendAll("game:endGame", myName);//ゲーム終了の情報を全員に配る
+                            MyServer.SendAll("server:ゲームが終了しました", myName);//ゲーム開始の情報を全員に配る
+                            isGameStart = false;
                         }
                     }
                 }
-                else if(cmd.equals("game")){
-                    if(recvStr.equals("startGame")){
+                if (cmd.equals("game")) {
+                    if (recvStr.equals("startGame")) {
 
-                        if(!ServerThread.isGameStart) {
+                        if (!ServerThread.isGameStart) {
                             ServerThread.isGameStart = true;
                             MyServer.SendAll("game:startGame", myName);//ゲーム開始の情報を全員に配る
                             //ゲームが開始されたらログをリセット
-                            MyServer.SendAll("server:ゲームが開始されました", myName);//ゲーム開始の情報を全員に配る
+                            MyServer.SendAll("server:ゲームが開始されます", myName);//ゲーム開始の情報を全員に配る
+                            MyServer.SendAll("server:待機中...", myName);//ゲーム開始の情報を全員に配る
 
                             //ゲームが始まったときランダムに出題者を決め、クライアントに送信
-                            String questioner = MyServer.getRandomQuestioner(MyServer.getUserName());
-                            MyServer.SendAll("clear:canvasClear", myName);//ゲーム開始時にキャンバスをクリア
-                            MyServer.SendAll("stroke:3" , myName);
-                            MyServer.SendAll("color:black" ,myName);
+                            questioner = MyServer.getRandomQuestioner(MyServer.getUserName());
                             MyServer.SendAll("questioner:" + questioner, myName);//出題者の情報を全員に配る
-                            MyServer.SendAll("server:出題者は" + questioner + "さんです", myName);//出題者の情報を全員に配る
 
-                            question = pokeSearch.getRandomPokemon(itemList);
-                            //出題
-                            MyServer.SendAll("question:" + question, myName);//お題の情報を全員に配る
                         }
-                    }
-                    else if(recvStr.equals("endGame")){
-                       if(ServerThread.isGameStart) {
+                    } else if (recvStr.equals("endGame")) {
+                        if (ServerThread.isGameStart) {
                             ServerThread.isGameStart = false;
                             MyServer.SendAll("game:endGame", myName);//ゲーム終了の情報を全員に配る
                             MyServer.SendAll("server:ゲームが終了しました", myName);//ゲーム開始の情報を全員に配る
-                      }
+                        }
                     }
                 }
+                if (cmd.equals("clear")) {
+                    MyServer.SendAll("clear:canvasClear", myName);//キャンバスリセットの情報を全員に配る
+                }
+                if (cmd.equals("question")) {
+                    switch (recvStr) {
+                        case "pokemon":
+                            question = pokeSearch.getRandomPokemon(itemList);
+                            genre = "ポケモン";
+                            break;
 
-                else if(cmd.equals("clear")){
-                    MyServer.SendAll("clear:canvasClear" , myName);//キャンバスリセットの情報を全員に配る
+                        case "animal":
+                            question = aniSearcher.getRandomAnimal(animalList);
+                            genre = "動物";
+                            break;
+                    }
+
+                    //出題
+                    MyServer.SendAll("question:" + question, myName);//お題の情報を全員に配る
+                    MyServer.SendAll("server:ゲームを開始します", myName);//出題者の情報を全員に配る
+                    MyServer.SendAll("server:出題者は" + questioner + "さんです", myName);//出題者の情報を全員に配る
+                    MyServer.SendAll("server:お題のジャンルは" + genre + "です", myName);//出題者の情報を全員に配る
+
                 }
 
-        /*        else if(cmd.equals("stroke")){
-                    MyServer.SendAll("stroke:" + recvStr , myName);
-                }*/
-
-            /*    else if(cmd.equals("color")){
-                    MyServer.SendAll("color:" + recvStr , myName);
-                }*/
-
                 //全員が抜けたらゲームを強制終了
-                if(MyServer.getUserName().size() == 0){
+                if (MyServer.getUserName().size() == 0) {
                     ServerThread.isGameStart = false;
                 }
 
-
-                System.out.println("Received from client No."+number+"("+myName+"), Messages: "+str + "(" + cmd + ")");
+                System.out.println("Received from client No." + number + "(" + myName + "), Messages: " + str + "(" + cmd + ")");
 
                 if (str != null) {//このソケット（バッファ）に入力があるかをチェック
-                  if (str.toUpperCase().equals("BYE")) {
+                    if (str.toUpperCase().equals("BYE")) {
                         myOut.println("Good bye!");
                         break;
 
-                }}
+                    }
+                }
             }
         } catch (Exception e) {
             //ここにプログラムが到達するときは，接続が切れたとき
