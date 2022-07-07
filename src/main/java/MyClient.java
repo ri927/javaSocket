@@ -71,6 +71,7 @@ public class MyClient extends JFrame {
 
     JRadioButton pokemonBt = new JRadioButton( "ポケモン" , true ); //初めから選択状態にする
     JRadioButton animalBt = new JRadioButton( "動物" );
+    JRadioButton countryBt = new JRadioButton( "国名" );
 
     ButtonGroup bgroup = new ButtonGroup();
 
@@ -328,7 +329,8 @@ public class MyClient extends JFrame {
                                 // ボタングループにラジオボタンを入れることで1つだけ選択できるようになる
                                 bgroup.add(pokemonBt);
                                 bgroup.add(animalBt);
-                                Object[] msg = {"お題のジャンルを選択", pokemonBt, animalBt}; // 配列に入れる
+                                bgroup.add(countryBt);
+                                Object[] msg = {"お題のジャンルを選択", pokemonBt, animalBt , countryBt}; // 配列に入れる
 
                                 int ans = JOptionPane.showConfirmDialog(null, msg, "JOptionPane の中で JList が使える",
                                         JOptionPane.OK_OPTION);
@@ -339,6 +341,11 @@ public class MyClient extends JFrame {
                                 }
                                 else if (animalBt.isSelected()) {
                                     MyClient.out.println("question:animal");//送信データをバッファに書き出す
+                                    MyClient.out.flush();//送信データをフラッシュ（ネットワーク上にはき出す）する
+
+                                }
+                                else if (countryBt.isSelected()) {
+                                    MyClient.out.println("question:country");//送信データをバッファに書き出す
                                     MyClient.out.flush();//送信データをフラッシュ（ネットワーク上にはき出す）する
 
                                 }

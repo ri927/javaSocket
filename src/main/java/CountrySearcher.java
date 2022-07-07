@@ -49,7 +49,7 @@ public class CountrySearcher {
         return itemList;
     }
 
-    public static String getRandomAnimal(ArrayList<String> itemList){
+    public static String getRandomCountry(ArrayList<String> itemList){
         Random rand = new Random();
         int num = rand.nextInt(itemList.size());
         String name = itemList.get(num);
@@ -59,7 +59,7 @@ public class CountrySearcher {
     public static void main(String[] args) {
         CountrySearcher searcher = new CountrySearcher();
         ArrayList<String> itemList = searcher.getItemList();
-        System.out.println(getRandomAnimal(itemList));
+        System.out.println(getRandomCountry(itemList));
 
 //        for(PokemonItem item: itemList) {
 //            System.out.println(item.name + "\n") ;

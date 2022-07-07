@@ -27,6 +27,9 @@ class ServerThread extends Thread {
     AnimalSearcher aniSearcher = new AnimalSearcher();
     ArrayList<String> animalList = aniSearcher.getItemList();
 
+    CountrySearcher countrySearcher = new CountrySearcher();
+    ArrayList<String> countryList = countrySearcher.getItemList();
+
 
 
     public ServerThread(int n, Socket i, InputStreamReader isr, BufferedReader in, PrintWriter out) {
@@ -125,6 +128,11 @@ class ServerThread extends Thread {
 
                         case "animal":
                             question = aniSearcher.getRandomAnimal(animalList);
+                            genre = "動物";
+                            break;
+
+                        case "country":
+                            question = countrySearcher.getRandomCountry(animalList);
                             genre = "動物";
                             break;
                     }
