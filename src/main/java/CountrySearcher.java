@@ -10,17 +10,17 @@ import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Random;
 
-public class AnimalSearcher {
-    AnimalResponse response;
+public class CountrySearcher {
+    CountryResponse response;
 
-    public AnimalSearcher() {
+    public CountrySearcher() {
         try {
             // サーバからやってくるデータをInputStreamとして取得
-            InputStreamReader inputStream = new InputStreamReader(new FileInputStream("animal.json"), "UTF-8");
+            InputStreamReader inputStream = new InputStreamReader(new FileInputStream("Country_list.json"), "UTF-8");
 
             // JSON の読み込み
             ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-            response  = mapper.readValue(inputStream, AnimalResponse.class);
+            response  = mapper.readValue(inputStream, CountryResponse.class);
 
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
@@ -38,11 +38,13 @@ public class AnimalSearcher {
 
     public ArrayList<String> getItemList(){
         ArrayList<String> itemList = new ArrayList<String>();
-        for(int i = 0; i < response.two.size(); i++) {
-            itemList.add(response.two.get(i));
-        }
-        for(int i = 0; i < response.three.size(); i++) {
-            itemList.add(response.two.get(i));
+        for(int i = 0; i < response.countries.size(); i++) {
+            String name = response.countries.get(i).name.full;
+            String shortName = response.countries.get(i).name.shortName;
+            if(shortName != null){
+                name = shortName;
+            }
+            itemList.add(name);
         }
         return itemList;
     }
@@ -55,7 +57,7 @@ public class AnimalSearcher {
     }
 
     public static void main(String[] args) {
-        AnimalSearcher searcher = new AnimalSearcher();
+        CountrySearcher searcher = new CountrySearcher();
         ArrayList<String> itemList = searcher.getItemList();
         System.out.println(getRandomAnimal(itemList));
 
