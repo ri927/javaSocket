@@ -41,9 +41,6 @@ public class AnimalSearcher {
         for(int i = 0; i < response.two.size(); i++) {
             itemList.add(response.two.get(i));
         }
-        for(int i = 0; i < response.three.size(); i++) {
-            itemList.add(response.two.get(i));
-        }
         return itemList;
     }
 

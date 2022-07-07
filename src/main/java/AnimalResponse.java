@@ -6,6 +6,6 @@ import java.util.List;
 public class AnimalResponse {
     @JsonProperty("2")
     public List<String> two;
-    @JsonProperty("3")
-    public List<String> three;
+//    @JsonProperty("3")
+//    public List<String> three;
 }
