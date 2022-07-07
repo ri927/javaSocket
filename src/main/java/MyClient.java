@@ -70,7 +70,7 @@ public class MyClient extends JFrame {
     JToolBar colorToolbar = new JToolBar();
 
     JRadioButton pokemonBt = new JRadioButton( "ポケモン" , true ); //初めから選択状態にする
-    JRadioButton animalBt = new JRadioButton( "動物" );
+    JRadioButton animalBt = new JRadioButton( "動物(カタカナ)" );
     JRadioButton countryBt = new JRadioButton( "国名" );
 
     ButtonGroup bgroup = new ButtonGroup();

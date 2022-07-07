@@ -128,12 +128,12 @@ class ServerThread extends Thread {
 
                         case "animal":
                             question = aniSearcher.getRandomAnimal(animalList);
-                            genre = "動物";
+                            genre = "動物(カタカナ)";
                             break;
 
                         case "country":
-                            question = countrySearcher.getRandomCountry(animalList);
-                            genre = "動物";
+                            question = countrySearcher.getRandomCountry(countryList);
+                            genre = "国名";
                             break;
                     }
 
