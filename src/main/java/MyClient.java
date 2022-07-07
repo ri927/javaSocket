@@ -833,8 +833,8 @@ class ChatCanvas extends Canvas implements MouseListener, MouseMotionListener {
     // ■ フィールド変数
     int x, y ;   // mouse pointer position
     int px, py ; // preliminary position
-    Image img = null;   // 仮の画用紙
-    Graphics gc = null; // 仮の画用紙用のペン
+    Image img = null;   // 仮のキャンバス
+    Graphics gc = null; // 仮ののペン
     Dimension d; // キャンバスの大きさ取得用
     PrintWriter out;//出力用のライター
     MyClient client;
@@ -855,15 +855,15 @@ class ChatCanvas extends Canvas implements MouseListener, MouseMotionListener {
     @Override
     // フレームに何らかの更新が行われた時の処理
     public void update(Graphics g) {
-        paint(g); // paint を呼び出す
+        paint(g);
     }
 
     @Override
     public void paint(Graphics g) {
         d = getSize();   // キャンバスのサイズを取得
-        if (img == null) // もし仮の画用紙の実体がまだ存在しなければ
+        if (img == null) // もし仮のキャンバスの実体がまだ存在しなければ
             img = createImage(d.width, d.height); // 作成
-        if (gc == null)  // もし仮の画用紙用のペン (gc) がまだ存在しなければ
+        if (gc == null)  // もし仮ののペン (gc) がまだ存在しなければ
             gc = img.getGraphics(); // 作成
 
         myPaint(px, py, x, y , fps , colorStr);
@@ -917,7 +917,7 @@ class ChatCanvas extends Canvas implements MouseListener, MouseMotionListener {
 
             //サーバに情報を送る
             client.out.println(msg);//送信データをバッファに書き出す
-            client.out.flush();//送信データをフラッシュ（ネットワーク上にはき出す）する
+            client.out.flush();//送信データをフラッシュ
             repaint(); // 再描画
         } else {
             Object[] msg = {"出題者ではないためキャンバスに書き込めません"};
