@@ -31,6 +31,8 @@ public class MyClient extends JFrame {
     static String colorStr = "black";
     static int fps = 3;
 
+    static int  memberCount = 0;
+
     String question = "";
     JLabel label;
 
@@ -70,7 +72,7 @@ public class MyClient extends JFrame {
     JToolBar colorToolbar = new JToolBar();
 
     JRadioButton pokemonBt = new JRadioButton( "ポケモン" , true ); //初めから選択状態にする
-    JRadioButton animalBt = new JRadioButton( "動物" );
+    JRadioButton animalBt = new JRadioButton( "動物(カタカナ)" );
     JRadioButton countryBt = new JRadioButton( "国名" );
 
     ButtonGroup bgroup = new ButtonGroup();
@@ -299,13 +301,15 @@ public class MyClient extends JFrame {
                         if(command.equals("user")){
                             String[] user = recvStr.split(",");
                             userList.setText("");
+                            memberCount = 0;
                             for(String name : user){
                                 userList.append(name + "\n");
+                                memberCount ++;
                             }
                         }
 
                         if(command.equals("game")){
-                            if(recvStr.equals("startGame")){
+                            if(recvStr.equals("startGame") ){
                                 this.isGameStart= true;
                                 logList.setText("");
                                 chatCanvas.setStroke(3);
@@ -313,7 +317,6 @@ public class MyClient extends JFrame {
                                 chatCanvas.gc.setColor(Color.WHITE);
                                 chatCanvas.gc.fillRect(0, 0, width, height);
                                 chatCanvas.gc.setColor(Color.black);
-
                             }
                             else if(recvStr.equals("endGame")){
                                 this.isGameStart = false;
@@ -332,7 +335,7 @@ public class MyClient extends JFrame {
                                 bgroup.add(countryBt);
                                 Object[] msg = {"お題のジャンルを選択", pokemonBt, animalBt , countryBt}; // 配列に入れる
 
-                                int ans = JOptionPane.showConfirmDialog(null, msg, "JOptionPane の中で JList が使える",
+                                int ans = JOptionPane.showConfirmDialog(null, msg, "ジャンル",
                                         JOptionPane.OK_OPTION);
 
                                 if (pokemonBt.isSelected()) {
@@ -752,10 +755,18 @@ public class MyClient extends JFrame {
 
             //ゲームが開始されていないとき
             if(!ResvClientThread.isGameStart){
-                //サーバに情報を送る
-                //コマンド game isGameStartフラグをTrueにするようにサーバーに要求
-                MyClient.out.println("game:startGame");//送信データをバッファに書き出す
-                MyClient.out.flush();//送信データをフラッシュ（ネットワーク上にはき出す）する
+                if(memberCount < 1) {
+                    //サーバに情報を送る
+                    //コマンド game isGameStartフラグをTrueにするようにサーバーに要求
+                    System.out.println(memberCount);
+                    MyClient.out.println("game:startGame");//送信データをバッファに書き出す
+                    MyClient.out.flush();//送信データをフラッシュ（ネットワーク上にはき出す）する
+                }
+                else{
+                    Object[] msg = { "参加者2人以上で開始できます" };
+                    JOptionPane.showMessageDialog( MyClient.container, msg, "Warning",
+                            JOptionPane.WARNING_MESSAGE );
+                }
             }
             else{
                 Object[] msg = { "ゲームは開始されています" };
