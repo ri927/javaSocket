@@ -755,9 +755,10 @@ public class MyClient extends JFrame {
 
             //ゲームが開始されていないとき
             if(!ResvClientThread.isGameStart){
-                if(memberCount != 0) {
+                if(memberCount < 1) {
                     //サーバに情報を送る
                     //コマンド game isGameStartフラグをTrueにするようにサーバーに要求
+                    System.out.println(memberCount);
                     MyClient.out.println("game:startGame");//送信データをバッファに書き出す
                     MyClient.out.flush();//送信データをフラッシュ（ネットワーク上にはき出す）する
                 }
