@@ -50,14 +50,4 @@ public class AnimalSearcher {
         String name = itemList.get(num);
         return name;
     }
-
-    public static void main(String[] args) {
-        AnimalSearcher searcher = new AnimalSearcher();
-        ArrayList<String> itemList = searcher.getItemList();
-        System.out.println(getRandomAnimal(itemList));
-
-//        for(PokemonItem item: itemList) {
-//            System.out.println(item.name + "\n") ;
-//        }
-    }
 }

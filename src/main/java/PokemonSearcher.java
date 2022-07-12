@@ -59,14 +59,4 @@ public class PokemonSearcher {
         String name = itemList.get(num).name;
         return name;
     }
-
-    public static void main(String[] args) {
-        PokemonSearcher searcher = new PokemonSearcher();
-        ArrayList<PokemonItem> itemList = searcher.getItemList();
-        System.out.println(getRandomPokemon(itemList));
-
-//        for(PokemonItem item: itemList) {
-//            System.out.println(item.name + "\n") ;
-//        }
-    }
 }

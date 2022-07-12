@@ -12,7 +12,6 @@ import java.io.PrintWriter;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
 
 
 public class MyClient extends JFrame {
@@ -25,7 +24,7 @@ public class MyClient extends JFrame {
     int width = 700;
     int height = 700;
 
-    ArrayList<String> nameList = new ArrayList<>();
+    //ArrayList<String> nameList = new ArrayList<>();
 
     static Color color ;
     static String colorStr = "black";
@@ -74,21 +73,26 @@ public class MyClient extends JFrame {
     JRadioButton pokemonBt = new JRadioButton( "ポケモン" , true ); //初めから選択状態にする
     JRadioButton animalBt = new JRadioButton( "動物(カタカナ)" );
     JRadioButton countryBt = new JRadioButton( "国名" );
+    JRadioButton yasaiBt = new JRadioButton( "野菜名(漢字/カナ)" );
 
     ButtonGroup bgroup = new ButtonGroup();
 
     public MyClient() {
         //名前の入力ダイアログを開く
-        String myName = JOptionPane.showInputDialog(null,"名前を入力してください","名前の入力",JOptionPane.QUESTION_MESSAGE);
+        String myName = "";
+        while (myName.equals("")){
+           myName =  JOptionPane.showInputDialog(null,"名前を入力してください","名前の入力",JOptionPane.QUESTION_MESSAGE);
+        }
+
 
         //接続先ipアドレスの入力ダイアログを開く
         String ipAddress = JOptionPane.showInputDialog(null,"ペイントクイズへようこそ!\n接続先のIPアドレスを入力してください","名前の入力",JOptionPane.QUESTION_MESSAGE);
 
         System.out.println(ipAddress);
 
-        if(myName.equals("")){
+      /*  if(myName.equals("")){
             myName = "No name";//名前がないときは，"No name"とする
-        }
+        }*/
 
         //ウィンドウを作成する
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);//ウィンドウを閉じるときに，正しく閉じるように設定する
@@ -134,7 +138,7 @@ public class MyClient extends JFrame {
         colorToolbar.add(colorItem);
 
         colorItem = new JButton(new WhiteAction());
-        colorItem.setIcon( new WhiteIcon()  ); // デフォルトアイコン
+        colorItem.setIcon(new WhiteIcon()); // デフォルトアイコン
         colorToolbar.add(colorItem);
 
 
@@ -333,10 +337,14 @@ public class MyClient extends JFrame {
                                 bgroup.add(pokemonBt);
                                 bgroup.add(animalBt);
                                 bgroup.add(countryBt);
+                                bgroup.add(yasaiBt);
                                 Object[] msg = {"お題のジャンルを選択", pokemonBt, animalBt , countryBt}; // 配列に入れる
 
-                                int ans = JOptionPane.showConfirmDialog(null, msg, "ジャンル",
-                                        JOptionPane.OK_OPTION);
+                                int ans = -1;
+                                while(ans != 0){
+                                    ans = JOptionPane.showConfirmDialog(null, msg, "ジャンル",
+                                            JOptionPane.OK_OPTION);
+                                }
 
                                 if (pokemonBt.isSelected()) {
                                     MyClient.out.println("question:pokemon");//送信データをバッファに書き出す
@@ -348,7 +356,7 @@ public class MyClient extends JFrame {
 
                                 }
                                 else if (countryBt.isSelected()) {
-                                    MyClient.out.println("question:country");//送信データをバッファに書き出す
+                                    MyClient.out.println("question:yasai");//送信データをバッファに書き出す
                                     MyClient.out.flush();//送信データをフラッシュ（ネットワーク上にはき出す）する
 
                                 }
@@ -556,6 +564,7 @@ public class MyClient extends JFrame {
             color = Color.black;
             chatCanvas.setColor(colorStr);
 
+
             if(!ResvClientThread.isQuestioner && ResvClientThread.isGameStart){
                 Object[] msg = { "出題者でないため色の変更ができません" };
                 JOptionPane.showMessageDialog( MyClient.container, msg, "Warning",
@@ -761,8 +770,8 @@ public class MyClient extends JFrame {
                     System.out.println(memberCount);
                     MyClient.out.println("game:startGame");//送信データをバッファに書き出す
                     MyClient.out.flush();//送信データをフラッシュ（ネットワーク上にはき出す）する
-                }
-                else{
+               }
+              else{
                     Object[] msg = { "参加者2人以上で開始できます" };
                     JOptionPane.showMessageDialog( MyClient.container, msg, "Warning",
                             JOptionPane.WARNING_MESSAGE );

@@ -20,7 +20,7 @@ public class YasaiSearcher {
     /** kurashiruのURL */
     private String yasaiUrl = "https://www.hyponex.co.jp/yasai_daijiten/vegetables";
     /** レシピのリスト */
-    private ArrayList<String> yasaiList;
+    private static ArrayList<String> yasaiList;
     /** コンストラクタ */
     public YasaiSearcher() {
         yasaiList = new ArrayList<String>();
@@ -57,7 +57,6 @@ public class YasaiSearcher {
             for(int i = 0; i < itemList.getLength(); i++) {	// 各li要素について
                 Node itemNode= itemList.item(i);  // li要素
                 String name = xPath.evaluate("h:a/h:p[@class='name']", itemNode);
-//                System.out.println(name);
                 yasaiList.add(name);
             }
             reader.close();
@@ -68,10 +67,8 @@ public class YasaiSearcher {
             e.printStackTrace();
         }
     }
-    /**
-     * レシピ情報のリストを返す
-     */
-    public ArrayList<String> getYasaiList() {
+
+    public static ArrayList<String> getYasaiList() {
         return yasaiList;
     }
 
@@ -80,12 +77,6 @@ public class YasaiSearcher {
         int num = rand.nextInt(itemList.size());
         String name = itemList.get(num);
         return name;
-    }
-
-    /** レシピ一覧の表示 */
-    public static void main(String[] args) {
-        YasaiSearcher yasai = new YasaiSearcher();
-        System.out.println(yasai.getRandomYasai(yasai.getYasaiList()));
     }
 }
 

@@ -55,14 +55,4 @@ public class CountrySearcher {
         String name = itemList.get(num);
         return name;
     }
-
-    public static void main(String[] args) {
-        CountrySearcher searcher = new CountrySearcher();
-        ArrayList<String> itemList = searcher.getItemList();
-        System.out.println(getRandomCountry(itemList));
-
-//        for(PokemonItem item: itemList) {
-//            System.out.println(item.name + "\n") ;
-//        }
-    }
 }

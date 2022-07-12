@@ -30,6 +30,11 @@ class ServerThread extends Thread {
     CountrySearcher countrySearcher = new CountrySearcher();
     ArrayList<String> countryList = countrySearcher.getItemList();
 
+    YasaiSearcher yasaiSearcher = new YasaiSearcher();
+    ArrayList<String> yasaiList = YasaiSearcher.getYasaiList();
+
+
+
 
 
     public ServerThread(int n, Socket i, InputStreamReader isr, BufferedReader in, PrintWriter out) {
@@ -134,6 +139,11 @@ class ServerThread extends Thread {
                         case "country":
                             question = countrySearcher.getRandomCountry(countryList);
                             genre = "国名";
+                            break;
+
+                        case "yasai":
+                            question = yasaiSearcher.getRandomYasai(yasaiList);
+                            genre = "野菜名(漢字/カナ)";
                             break;
                     }
 
