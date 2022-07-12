@@ -96,7 +96,7 @@ public class MyClient extends JFrame {
 
         //ウィンドウを作成する
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);//ウィンドウを閉じるときに，正しく閉じるように設定する
-        setTitle("ポケモンペイントクイズ");//ウィンドウのタイトルを設定する
+        setTitle("ペイントクイズ");//ウィンドウのタイトルを設定する
         setSize(width,height);//ウィンドウのサイズを設定する
         container = getContentPane();//フレームのペインを取得する
         chatCanvas = new ChatCanvas(this); // mc のオブジェクト（実体）を作成
