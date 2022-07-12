@@ -338,7 +338,7 @@ public class MyClient extends JFrame {
                                 bgroup.add(animalBt);
                                 bgroup.add(countryBt);
                                 bgroup.add(yasaiBt);
-                                Object[] msg = {"お題のジャンルを選択", pokemonBt, animalBt , countryBt}; // 配列に入れる
+                                Object[] msg = {"お題のジャンルを選択", pokemonBt, animalBt , countryBt , yasaiBt}; // 配列に入れる
 
                                 int ans = -1;
                                 while(ans != 0){
