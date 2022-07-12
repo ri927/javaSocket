@@ -34,9 +34,6 @@ class ServerThread extends Thread {
     ArrayList<String> yasaiList = YasaiSearcher.getYasaiList();
 
 
-
-
-
     public ServerThread(int n, Socket i, InputStreamReader isr, BufferedReader in, PrintWriter out) {
         number = n;
         incoming = i;
