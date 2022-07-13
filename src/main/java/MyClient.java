@@ -24,8 +24,6 @@ public class MyClient extends JFrame {
     int width = 700;
     int height = 700;
 
-    //ArrayList<String> nameList = new ArrayList<>();
-
     static Color color ;
     static String colorStr = "black";
     static int fps = 3;
@@ -84,15 +82,10 @@ public class MyClient extends JFrame {
            myName =  JOptionPane.showInputDialog(null,"名前を入力してください","名前の入力",JOptionPane.QUESTION_MESSAGE);
         }
 
-
         //接続先ipアドレスの入力ダイアログを開く
         String ipAddress = JOptionPane.showInputDialog(null,"ペイントクイズへようこそ!\n接続先のIPアドレスを入力してください","名前の入力",JOptionPane.QUESTION_MESSAGE);
 
         System.out.println(ipAddress);
-
-      /*  if(myName.equals("")){
-            myName = "No name";//名前がないときは，"No name"とする
-        }*/
 
         //ウィンドウを作成する
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);//ウィンドウを閉じるときに，正しく閉じるように設定する
@@ -206,8 +199,6 @@ public class MyClient extends JFrame {
         //サーバに接続する
         Socket socket = null;
         try {
-            //"localhost"は，自分内部への接続．localhostを接続先のIP Address（"133.42.155.201"形式）に設定すると他のPCのサーバと通信できる
-            //10000はポート番号．IP Addressで接続するPCを決めて，ポート番号でそのPC上動作するプログラムを特定する
             InetSocketAddress endpoint= new InetSocketAddress(ipAddress ,   10000);
             socket = new Socket();
             socket.connect(endpoint, 1000);
@@ -227,7 +218,7 @@ public class MyClient extends JFrame {
         }
 
         ResvClientThread mrt = new ResvClientThread(socket, myName);//受信用のスレッドを作成する
-        mrt.start();//スレッドを動かす（Runが動く）
+        mrt.start();//スレッドを動かす
     }
 
     //メッセージ受信のためのスレッド
