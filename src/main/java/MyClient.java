@@ -347,9 +347,12 @@ public class MyClient extends JFrame {
 
                                 }
                                 else if (countryBt.isSelected()) {
+                                    MyClient.out.println("question:country");//送信データをバッファに書き出す
+                                    MyClient.out.flush();//送信データをフラッシュ（ネットワーク上にはき出す）する
+                                }
+                                else if (yasaiBt.isSelected()) {
                                     MyClient.out.println("question:yasai");//送信データをバッファに書き出す
                                     MyClient.out.flush();//送信データをフラッシュ（ネットワーク上にはき出す）する
-
                                 }
                             }
 
